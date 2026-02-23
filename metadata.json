@@ -1,0 +1,5 @@
+{
+  "name": "Hasanat | حسنات",
+  "description": "تطبيق ديني شامل يحتوي على مواقيت الصلاة، المصحف الشريف، ومزرعة الأذكار التفاعلية.",
+  "requestFramePermissions": ["geolocation"]
+}

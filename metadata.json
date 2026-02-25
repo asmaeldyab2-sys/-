@@ -1,5 +1,5 @@
 {
-  "name": "مزرعة الأذكار الذكية",
-  "description": "تطبيق إسلامي تفاعلي يجمع بين العبادة والجمال، ازرع نخلة في مزرعتك مع كل ذكر لله.",
-  "requestFramePermissions": ["geolocation"]
+  "name": "حسنات - النسخة الاحترافية",
+  "description": "تطبيق إسلامي متكامل يجمع بين العلم الشرعي، القرآن الكريم، ومزرعة الأذكار التفاعلية.",
+  "requestFramePermissions": ["geolocation", "microphone"]
 }

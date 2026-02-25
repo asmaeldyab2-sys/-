@@ -34,7 +34,9 @@ import {
   Cloud,
   Mic,
   Trophy,
-  Users
+  Users,
+  Trash2,
+  Maximize
 } from 'lucide-react';
 
 // --- Types ---
@@ -276,7 +278,17 @@ const fatwaData: Record<string, { q: string; a: string; scholar: string }[]> = {
     { q: 'هل يجوز للمسافر الجمع بين الصلوات دون قصر؟', a: 'نعم يجوز الجمع دون قصر، لكن السنة للمسافر أن يقصر الصلاة الرباعية إلى ركعتين.', scholar: 'ابن عثيمين' },
     { q: 'ما حكم الصلاة في السراويل الضيقة؟', a: 'إذا كانت تستر العورة فالصلاة صحيحة، لكن يكره لبس الضيق الذي يصف حجم العورة، والأولى لبس الواسع الساتر.', scholar: 'اللجنة الدائمة' },
     { q: 'هل تبطل الصلاة بالضحك؟', a: 'الضحك الذي يظهر فيه صوت (القهقهة) يبطل الصلاة بإجماع العلماء، أما التبسم فلا يبطلها.', scholar: 'ابن باز' },
-    { q: 'ما حكم صلاة المنفرد خلف الصف؟', a: 'لا تصح صلاة المنفرد خلف الصف إذا وجد مكاناً في الصف، لقوله ﷺ: "لا صلاة لمنفرد خلف الصف".', scholar: 'ابن باز' }
+    { q: 'ما حكم صلاة المنفرد خلف الصف؟', a: 'لا تصح صلاة المنفرد خلف الصف إذا وجد مكاناً في الصف، لقوله ﷺ: "لا صلاة لمنفرد خلف الصف".', scholar: 'ابن باز' },
+    { q: 'ما حكم الصلاة في الثوب الذي أصابه طين الشوارع؟', a: 'الأصل في طين الشوارع الطهارة، إلا إذا علم يقيناً أنه اختلط بنجاسة، فالصلاة فيه صحيحة.', scholar: 'ابن عثيمين' },
+    { q: 'هل يشرع سجود السهو في صلاة الجنازة؟', a: 'لا يشرع سجود السهو في صلاة الجنازة لأنها ليس فيها ركوع ولا سجود.', scholar: 'ابن باز' },
+    { q: 'ما حكم تغطية الوجه للمرأة في الصلاة؟', a: 'السنة كشف الوجه في الصلاة للمرأة إذا لم يكن عندها أجانب، فإن كان عندها أجانب وجب عليها ستره.', scholar: 'اللجنة الدائمة' },
+    { q: 'هل يجوز الالتفات في الصلاة؟', a: 'الالتفات اليسير للحاجة لا يبطل الصلاة، أما الالتفات الكثير لغير حاجة فيكره، والالتفات بجميع البدن يبطلها.', scholar: 'ابن باز' },
+    { q: 'ما حكم الصلاة في الكنيسة؟', a: 'تكره الصلاة في الكنيسة لوجود الصور والتماثيل، لكن إذا اضطر المسلم إليها وصلى في مكان خال من الصور فصلاته صحيحة.', scholar: 'ابن عثيمين' },
+    { q: 'هل تبطل الصلاة برفع البصر إلى السماء؟', a: 'رفع البصر إلى السماء في الصلاة محرم، وقد حذر منه النبي ﷺ، لكنه لا يبطل الصلاة عند جمهور العلماء.', scholar: 'ابن باز' },
+    { q: 'ما حكم صلاة تحية المسجد والإمام يخطب الجمعة؟', a: 'يشرع لمن دخل والامام يخطب أن يصلي ركعتين خفيفتين قبل أن يجلس.', scholar: 'ابن باز' },
+    { q: 'هل يجوز للمصلي أن يقرأ من المصحف في صلاة الفريضة؟', a: 'الأفضل القراءة مما يحفظ، لكن إذا احتاج للقراءة من المصحف في الفريضة جاز ذلك عند بعض العلماء، والجمهور على جوازه في النافلة.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم الصلاة في مكان فيه صور؟', a: 'تكره الصلاة في مكان فيه صور معلقة أو منصوبة، لكن الصلاة صحيحة مع الكراهة.', scholar: 'اللجنة الدائمة' },
+    { q: 'هل يشرع الدعاء بعد السلام من الصلاة؟', a: 'السنة الإتيان بالأذكار الواردة بعد السلام، أما الدعاء الجماعي فبدعة، والدعاء الفردي أحياناً لا بأس به.', scholar: 'ابن باز' }
   ],
   'قسم الوضوء': [
     { q: 'هل مس المرأة ينقض الوضوء؟', a: 'الراجح أن مس المرأة لا ينقض الوضوء مطلقاً، سواء كان بشهوة أو بغير شهوة، إلا إذا خرج منه شيء.', scholar: 'ابن عثيمين' },
@@ -288,7 +300,17 @@ const fatwaData: Record<string, { q: string; a: string; scholar: string }[]> = {
     { q: 'هل يجب تجديد الوضوء لكل صلاة؟', a: 'لا يجب، بل يستحب، ويجوز صلاة عدة صلوات بوضوء واحد ما لم ينتقض.', scholar: 'ابن باز' },
     { q: 'ما حكم الوضوء مع وجود طلاء الأظافر؟', a: 'طلاء الأظافر (المناكير) يمنع وصول الماء، فلا يصح الوضوء معه، ويجب إزالته قبل الوضوء.', scholar: 'ابن باز' },
     { q: 'هل مس الفرج ينقض الوضوء؟', a: 'مس الفرج باليد مباشرة من غير حائل ينقض الوضوء على الراجح من قولي العلماء.', scholar: 'ابن باز' },
-    { q: 'ما حكم التسمية في أول الوضوء؟', a: 'التسمية واجبة مع الذكر وتسقط مع النسيان عند بعض العلماء، والجمهور على أنها سنة مؤكدة.', scholar: 'ابن عثيمين' }
+    { q: 'ما حكم التسمية في أول الوضوء؟', a: 'التسمية واجبة مع الذكر وتسقط مع النسيان عند بعض العلماء، والجمهور على أنها سنة مؤكدة.', scholar: 'ابن عثيمين' },
+    { q: 'هل القيء ينقض الوضوء؟', a: 'الراجح أن القيء لا ينقض الوضوء، سواء كان قليلاً أو كثيراً.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم الوضوء من ماء البحر؟', a: 'ماء البحر طهور، يجوز الوضوء والغسل منه، لقوله ﷺ: "هو الطهور ماؤه الحل ميتته".', scholar: 'ابن باز' },
+    { q: 'هل يجب غسل داخل العينين في الوضوء؟', a: 'لا يشرع غسل داخل العينين، بل هو من الغلو والتعنت الذي قد يضر بالبصر.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم الكلام أثناء الوضوء؟', a: 'الكلام أثناء الوضوء مباح ولا يبطله، لكن الأفضل الانشغال بذكر الله والتدبر.', scholar: 'ابن باز' },
+    { q: 'هل يجب تنشيف الأعضاء بعد الوضوء؟', a: 'التنشيف مباح، لا يجب ولا يكره، والأمر فيه واسع.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم الوضوء بماء زمزم؟', a: 'يجوز الوضوء والغسل بماء زمزم، ولا كراهة في ذلك على الراجح.', scholar: 'ابن باز' },
+    { q: 'هل يجزئ الوضوء عن الغسل؟', a: 'لا يجزئ الوضوء عن غسل الجنابة، بل يجب الغسل وتعميم البدن بالماء.', scholar: 'ابن باز' },
+    { q: 'ما حكم الوضوء في الحمام (دورة المياه)؟', a: 'يجوز الوضوء في الحمام، وتكون التسمية في القلب أو سراً قبل الدخول أو عند البدء.', scholar: 'ابن عثيمين' },
+    { q: 'هل قص الأظافر ينقض الوضوء؟', a: 'قص الأظافر أو حلق الشعر لا ينقض الوضوء.', scholar: 'ابن باز' },
+    { q: 'ما حكم المسح على العمامة؟', a: 'يجوز المسح على العمامة إذا كانت ساترة للرأس ومدارة تحت الحنك أو لها ذؤابة.', scholar: 'ابن عثيمين' }
   ],
   'قسم الصيام': [
     { q: 'ما حكم استخدام بخاخ الربو للصائم؟', a: 'بخاخ الربو لا يفطر لأنه غاز يذهب إلى الرئة وليس طعاماً ولا شراباً ولا في معناهما.', scholar: 'ابن عثيمين' },
@@ -300,7 +322,17 @@ const fatwaData: Record<string, { q: string; a: string; scholar: string }[]> = {
     { q: 'ما حكم من أكل أو شرب ناسياً في نهار رمضان؟', a: 'صومه صحيح ولا قضاء عليه ولا كفارة، لقوله ﷺ: "فإنما أطعمه الله وسقاه".', scholar: 'ابن باز' },
     { q: 'هل العطر والبخور يفطران؟', a: 'العطر لا يفطر، أما البخور فيجوز شمه ولكن لا يجوز استنشاق دخانه عمداً لأنه جرم يصل للجوف.', scholar: 'ابن عثيمين' },
     { q: 'ما حكم تذوق الطعام للحاجة؟', a: 'يجوز تذوق الطعام بطرف اللسان للحاجة مع بصقه وعدم بلع شيء منه.', scholar: 'ابن باز' },
-    { q: 'هل الإبر المغذية تفطر؟', a: 'نعم، الإبر المغذية التي تقوم مقام الطعام والشراب تفطر، أما الإبر العلاجية غير المغذية فلا تفطر.', scholar: 'ابن عثيمين' }
+    { q: 'هل الإبر المغذية تفطر؟', a: 'نعم، الإبر المغذية التي تقوم مقام الطعام والشراب تفطر، أما الإبر العلاجية غير المغذية فلا تفطر.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم صيام من طلع عليه الفجر وهو جنب؟', a: 'صومه صحيح، ويغتسل ويصلي الفجر، فقد كان النبي ﷺ يدركه الفجر وهو جنب من أهله ثم يغتسل ويصوم.', scholar: 'ابن باز' },
+    { q: 'هل يجوز للصائم استخدام السواك في نهار رمضان؟', a: 'السواك سنة للصائم وغيره في جميع الأوقات، قبل الزوال وبعده.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم من جامع زوجته في نهار رمضان؟', a: 'عليه القضاء والكفارة المغلظة: عتق رقبة، فإن لم يجد فصيام شهرين متتابعين، فإن لم يجد فإطعام ستين مسكيناً.', scholar: 'ابن باز' },
+    { q: 'هل يجوز الفطر للمسافر؟', a: 'نعم يجوز للمسافر الفطر والقضاء، سواء شق عليه السفر أو لم يشق.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم صيام الحامل والمرضع؟', a: 'يجوز لهما الفطر إذا خافتا على أنفسهما أو ولديهما، وعليهما القضاء عند جمهور العلماء.', scholar: 'ابن باز' },
+    { q: 'هل قلع الضرس يفطر؟', a: 'قلع الضرس لا يفطر، لكن يجب الحذر من بلع الدم أو الماء الناتج عن العملية.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم استخدام قطرة الأنف للصائم؟', a: 'قطرة الأنف تفطر إذا وصلت إلى الجوف، لأن الأنف منفذ للمعدة، لقوله ﷺ: "وبالغ في الاستنشاق إلا أن تكون صائماً".', scholar: 'ابن باز' },
+    { q: 'هل الكحل يفطر؟', a: 'الكحل لا يفطر الصائم على الراجح، ولو وجد طعمها في حلقه.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم من أفطر يوماً من رمضان بغير عذر؟', a: 'ارتكب كبيرة عظمى، ويجب عليه التوبة الصادقة والقضاء، وبعض العلماء يرى وجوب الكفارة.', scholar: 'ابن باز' },
+    { q: 'هل التحاميل تفطر؟', a: 'التحاميل التي تؤخذ عن طريق الدبر لا تفطر لأنها ليست طعاماً ولا شراباً.', scholar: 'ابن عثيمين' }
   ],
   'قسم الزكاة': [
     { q: 'هل تجب الزكاة في الذهب المعد للاستعمال؟', a: 'الراجح وجوب الزكاة في الذهب والفضة إذا بلغا النصاب، حتى لو كانا للبس والزينة، لعموم الأدلة.', scholar: 'ابن باز' },
@@ -312,11 +344,41 @@ const fatwaData: Record<string, { q: string; a: string; scholar: string }[]> = {
     { q: 'ما حكم إخراج زكاة الفطر نقداً؟', a: 'السنة إخراجها طعاماً من قوت البلد، وذهب بعض العلماء كأبي حنيفة إلى جواز إخراجها نقداً للمصلحة.', scholar: 'إسلام ويب' },
     { q: 'هل تجب الزكاة في أسهم الشركات؟', a: 'نعم تجب الزكاة في الأسهم، وتختلف طريقة حسابها بحسب نوع الشركة (صناعية أو تجارية).', scholar: 'اللجنة الدائمة' },
     { q: 'ما حكم تأخير إخراج الزكاة بعد وجوبها؟', a: 'لا يجوز تأخير الزكاة بعد تمام الحول إلا لعذر شرعي، ويجب المبادرة بإخراجها فوراً.', scholar: 'ابن باز' },
-    { q: 'هل تجب الزكاة في العقارات المعدة للسكن؟', a: 'لا زكاة في العقارات المعدة للسكن الشخصي، وإنما الزكاة في العقارات المعدة للتجارة والبيع.', scholar: 'ابن عثيمين' }
+    { q: 'هل تجب الزكاة في العقارات المعدة للسكن؟', a: 'لا زكاة في العقارات المعدة للسكن الشخصي، وإنما الزكاة في العقارات المعدة للتجارة والبيع.', scholar: 'ابن عثيمين' },
+    { q: 'هل تجب الزكاة في الألماس والأحجار الكريمة؟', a: 'لا تجب الزكاة في الألماس والأحجار الكريمة إلا إذا كانت معدة للتجارة.', scholar: 'ابن باز' },
+    { q: 'ما حكم إخراج الزكاة لغير المسلم؟', a: 'لا يجوز دفع الزكاة لغير المسلم، إلا إذا كان من المؤلفة قلوبهم.', scholar: 'ابن عثيمين' },
+    { q: 'هل تجب الزكاة في السيارة الخاصة؟', a: 'لا تجب الزكاة في السيارة الخاصة ولا في أثاث المنزل المعد للاستعمال.', scholar: 'ابن باز' },
+    { q: 'ما حكم دفع الزكاة للأخ الفقير؟', a: 'يجوز دفع الزكاة للأخ الفقير، وهي صدقة وصلة.', scholar: 'ابن عثيمين' },
+    { q: 'هل تجب الزكاة في مال الجمعية؟', a: 'تجب الزكاة على كل مشترك في الجمعية إذا بلغ نصيبه النصاب وحال عليه الحول.', scholar: 'ابن باز' },
+    { q: 'ما حكم إخراج الزكاة عن الميت؟', a: 'إذا مات المسلم وعليه زكاة لم يخرجها، وجب إخراجها من تركته قبل توزيع الميراث.', scholar: 'ابن عثيمين' },
+    { q: 'هل تجب الزكاة في العسل؟', a: 'فيها خلاف، والراجح وجوب الزكاة في العسل إذا بلغ النصاب (650 كجم تقريباً) ومقداره العشر.', scholar: 'ابن باز' },
+    { q: 'ما حكم نقل الزكاة من بلد إلى بلد؟', a: 'الأصل توزيع الزكاة في بلد المال، ويجوز نقلها لمصلحة شرعية راجحة كوجود أقارب أحوج.', scholar: 'ابن عثيمين' },
+    { q: 'هل تجب الزكاة في الأرض المشتراة لحفظ المال؟', a: 'إذا لم ينو بها التجارة فلا زكاة فيها، أما إذا نواها للتجارة ففيها الزكاة كل عام.', scholar: 'ابن باز' },
+    { q: 'ما حكم دفع الزكاة للزوج الفقير؟', a: 'يجوز للمرأة أن تدفع زكاتها لزوجها الفقير لأنه لا تجب عليها نفقته.', scholar: 'ابن عثيمين' },
+    { q: 'هل تجب الزكاة في الذهب المستعمل؟', a: 'نعم تجب فيه الزكاة إذا بلغ النصاب وحال عليه الحول على الراجح من قولي العلماء.', scholar: 'ابن باز' },
+    { q: 'ما حكم إخراج الزكاة في صورة سلال غذائية؟', a: 'الأصل إخراج الزكاة نقداً للفقير ليتصرف فيها كيف يشاء، لكن إذا كان الفقير سفيهاً أو يخشى ضياع المال جاز إخراجها طعاماً.', scholar: 'ابن عثيمين' }
   ],
-  'مسائل معاصرة': [
-    { q: 'ما حكم العمل في البنوك الربوية؟', a: 'لا يجوز العمل في البنوك الربوية لما فيه من التعاون على الإثم والعدوان، وقد لعن النبي ﷺ آكل الربا وموكله وكاتبه وشاهديه.', scholar: 'ابن باز' },
-    { q: 'ما حكم التأمين التجاري؟', a: 'التأمين التجاري بجميع أنواعه محرم لما فيه من الغرر والمقامرة وأكل أموال الناس بالباطل.', scholar: 'إسلام سؤال وجواب' }
+  'قضايا معاصرة': [
+    { q: 'ما حكم العمل في البنوك الربوية؟', a: 'لا يجوز العمل في البنوك الربوية لما فيه من التعاون على الإثم والعدوان.', scholar: 'ابن باز' },
+    { q: 'ما حكم العملات الرقمية (البيتكوين)؟', a: 'فيها خلاف كبير بين العلماء المعاصرين، والأحوط تجنبها لما فيها من الغرر والجهالة الكبيرة.', scholar: 'المجامع الفقهية' },
+    { q: 'هل يجوز إجراء عمليات التجميل؟', a: 'تجوز إذا كانت لإزالة عيب أو تشوه، أما إذا كانت لمجرد زيادة الحسن وتغيير خلق الله فلا تجوز.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم التأمين التجاري؟', a: 'التأمين التجاري محرم لما فيه من الغرر والربا، والبديل هو التأمين التعاوني الإسلامي.', scholar: 'اللجنة الدائمة' },
+    { q: 'ما حكم أطفال الأنابيب؟', a: 'تجوز بشروط مشددة، منها أن تكون النطفة من الزوج والبويضة من الزوجة وأن يتم الزرع في رحم الزوجة أثناء قيام الزوجية.', scholar: 'مجمع الفقه الإسلامي' },
+    { q: 'هل يجوز التبرع بالأعضاء بعد الموت؟', a: 'يجوز إذا وصى بذلك وكان فيه نفع لمسلم، بشرط عدم البيع.', scholar: 'هيئة كبار العلماء' },
+    { q: 'ما حكم الاستنساخ البشري؟', a: 'محرم بإجماع المجامع الفقهية لما فيه من المفاسد العظيمة وتغيير خلق الله.', scholar: 'مجمع الفقه الإسلامي' },
+    { q: 'ما حكم الموسيقى والمعازف؟', a: 'المعازف محرمة عند جماهير العلماء والأئمة الأربعة، لقوله ﷺ: "ليكونن من أمتي أقوام يستحلون الحر والحرير والخمر والمعازف".', scholar: 'ابن باز' },
+    { q: 'هل يجوز للمرأة السفر بدون محرم؟', a: 'الأصل عدم الجواز لقوله ﷺ: "لا تسافر المرأة إلا مع ذي محرم"، وأجاز بعض المعاصرين السفر للضرورة مع رفقة آمنة.', scholar: 'ابن باز' },
+    { q: 'ما حكم التصوير الفوتوغرافي؟', a: 'فيه خلاف، والراجح جوازه للحاجة والضرورة، أما تصوير ذوات الأرواح للذكرى والزينة فمحل منع عند كثير من العلماء.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم الشراء والبيع عن طريق الإنترنت؟', a: 'جائز إذا انضبطت الشروط الشرعية وانتفى الغرر والجهالة.', scholar: 'اللجنة الدائمة' },
+    { q: 'هل يجوز استخدام برامج الكمبيوتر المقرصنة؟', a: 'لا يجوز لأنها حقوق مملوكة لأصحابها، ولا يجوز الاعتداء عليها إلا بإذنهم.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم الإجهاض في الأسابيع الأولى؟', a: 'لا يجوز إلا لضرورة طبية معتبرة يقررها الأطباء الثقات.', scholar: 'اللجنة الدائمة' },
+    { q: 'ما حكم التدخين؟', a: 'محرم بإجماع العلماء المعاصرين لما فيه من الضرر المحقق على الصحة والمال.', scholar: 'ابن باز' },
+    { q: 'هل يجوز للمسلم الاحتفال بأعياد غير المسلمين؟', a: 'لا يجوز للمسلم المشاركة ولا التهنئة بأعيادهم الدينية الخاصة بهم.', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم القروض التعليمية بفوائد؟', a: 'محرمة لأنها ربا صريح، والضرورة تقدر بقدرها.', scholar: 'اللجنة الدائمة' },
+    { q: 'هل يجوز العمل في شركات التأمين؟', a: 'لا يجوز العمل في شركات التأمين التجاري لما فيه من التعاون على المحرم.', scholar: 'ابن باز' },
+    { q: 'ما حكم صبغ الشعر بالسواد؟', a: 'محرم للرجال والنساء على الراجح لقوله ﷺ: "وجنبوها السواد".', scholar: 'ابن عثيمين' },
+    { q: 'ما حكم الوشم؟', a: 'محرم وهو من الكبائر، لقوله ﷺ: "لعن الله الواشمة والمستوشمة".', scholar: 'ابن باز' },
+    { q: 'هل يجوز للمرأة العمل في مكان مختلط؟', a: 'الأصل أن تعمل المرأة في مكان خاص بالنساء، والاختلط محرم لما يترتب عليه من مفاسد.', scholar: 'اللجنة الدائمة' }
   ]
 };
 
@@ -829,6 +891,9 @@ export default function App() {
 
     const savedNawawi = localStorage.getItem('hasanat_nawawi_progress');
     if (savedNawawi) setNawawiProgress(JSON.parse(savedNawawi));
+
+    // Request permissions
+    requestAllPermissions();
   }, []);
 
   useEffect(() => {
@@ -958,7 +1023,7 @@ export default function App() {
   }
 
   return (
-    <div className={`flex flex-col h-screen max-w-md mx-auto overflow-hidden shadow-2xl relative transition-colors duration-300 bg-slate-900 text-slate-100`}>
+    <div className={`flex flex-col h-screen w-full overflow-hidden shadow-2xl relative transition-colors duration-300 bg-slate-900 text-slate-100`}>
       {/* Header */}
       <header className="p-6 flex items-center justify-between z-20 bg-slate-900/80 backdrop-blur-sm">
         <button 
@@ -996,26 +1061,6 @@ export default function App() {
                   />
                 </div>
                 <p className="text-[10px] text-slate-400 mt-2 text-center">استمر في التسبيح والتعلم لرفع مستوى إنجازك</p>
-              </div>
-
-              {/* Prayer Times Card */}
-              <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2 text-islamic-green dark:text-emerald-500">
-                    <MapPin size={18} />
-                    <span className="font-medium">{location}</span>
-                  </div>
-                  <span className="text-xs text-slate-400 dark:text-slate-500">الأحد، ٢٢ فبراير</span>
-                </div>
-                
-                <div className="grid grid-cols-5 gap-2">
-                  {prayerTimes && Object.entries(prayerTimes).map(([name, time]) => (
-                    <div key={name} className="flex flex-col items-center">
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 mb-1">{name}</span>
-                      <span className="text-sm font-bold text-islamic-green dark:text-emerald-400">{time}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               {/* Random Verse */}
@@ -2148,7 +2193,7 @@ export default function App() {
                   href="https://instagram.com/is_d03" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                  className="w-full p-4 border-b border-black/5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-pink-100 text-pink-600 rounded-xl">
@@ -2161,6 +2206,43 @@ export default function App() {
                     <ChevronLeft size={18} className="text-slate-300" />
                   </div>
                 </a>
+
+                <button 
+                  onClick={() => {
+                    if (confirm('هل أنت متأكد من رغبتك في مسح جميع الأشجار في المزرعة؟')) {
+                      setTrees([]);
+                      setDhikrCount(0);
+                    }
+                  }}
+                  className="w-full p-4 border-b border-black/5 flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-red-100 text-red-600 rounded-xl">
+                      <Trash2 size={20} />
+                    </div>
+                    <span className="font-bold text-slate-700 dark:text-slate-200">مسح المزرعة (لتحسين الأداء)</span>
+                  </div>
+                  <ChevronLeft size={18} className="text-slate-300" />
+                </button>
+
+                <button 
+                  onClick={() => {
+                    if (!document.fullscreenElement) {
+                      document.documentElement.requestFullscreen();
+                    } else {
+                      document.exitFullscreen();
+                    }
+                  }}
+                  className="w-full p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-slate-100 text-slate-600 rounded-xl">
+                      <Maximize size={20} />
+                    </div>
+                    <span className="font-bold text-slate-700 dark:text-slate-200">وضع ملء الشاشة</span>
+                  </div>
+                  <ChevronLeft size={18} className="text-slate-300" />
+                </button>
               </div>
             </motion.div>
           )}
@@ -2357,51 +2439,41 @@ export default function App() {
       </AnimatePresence>
 
       {/* Navigation */}
-      <nav className={`fixed bottom-6 left-6 right-6 backdrop-blur-xl rounded-3xl shadow-2xl border p-2 flex justify-around items-center z-50 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800/90 border-white/5' : 'bg-white/90 border-black/5'}`}>
+      <nav className={`fixed bottom-6 left-6 right-6 backdrop-blur-xl rounded-3xl shadow-2xl border p-1 flex justify-around items-center z-50 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800/90 border-white/5' : 'bg-white/90 border-black/5'}`}>
         <button
           onClick={() => setActiveSection('home')}
-          className={`flex flex-col items-center p-3 rounded-2xl transition-all ${activeSection === 'home' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
+          className={`flex flex-col items-center p-2 rounded-2xl transition-all ${activeSection === 'home' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
         >
-          <Home size={24} />
-          <span className="text-[10px] mt-1 font-bold">الرئيسية</span>
+          <Home size={20} />
+          <span className="text-[9px] mt-1 font-bold">الرئيسية</span>
         </button>
         <button
           onClick={() => setActiveSection('farm')}
-          className={`flex flex-col items-center p-3 rounded-2xl transition-all ${activeSection === 'farm' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
+          className={`flex flex-col items-center p-2 rounded-2xl transition-all ${activeSection === 'farm' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
         >
-          <Sprout size={24} />
-          <span className="text-[10px] mt-1 font-bold">المزرعة</span>
+          <Sprout size={20} />
+          <span className="text-[9px] mt-1 font-bold">المزرعة</span>
         </button>
         <button
           onClick={() => setActiveSection('knowledge')}
-          className={`flex flex-col items-center p-3 rounded-2xl transition-all ${activeSection === 'knowledge' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
+          className={`flex flex-col items-center p-2 rounded-2xl transition-all ${activeSection === 'knowledge' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
         >
-          <BookOpen size={24} />
-          <span className="text-[10px] mt-1 font-bold">العلم</span>
+          <BookOpen size={20} />
+          <span className="text-[9px] mt-1 font-bold">العلم</span>
         </button>
         <button
           onClick={() => setActiveSection('ahl-allah')}
-          className={`flex flex-col items-center p-3 rounded-2xl transition-all ${activeSection === 'ahl-allah' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
+          className={`flex flex-col items-center p-2 rounded-2xl transition-all ${activeSection === 'ahl-allah' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
         >
-          <Users size={24} />
-          <span className="text-[10px] mt-1 font-bold">أهل الله</span>
+          <Users size={20} />
+          <span className="text-[9px] mt-1 font-bold">أهل الله</span>
         </button>
         <button
           onClick={() => setActiveSection('misbaha')}
-          className={`flex flex-col items-center p-3 rounded-2xl transition-all ${activeSection === 'misbaha' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
+          className={`flex flex-col items-center p-2 rounded-2xl transition-all ${activeSection === 'misbaha' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
         >
-          <RotateCcw size={24} />
-          <span className="text-[10px] mt-1 font-bold">المسبحة</span>
-        </button>
-        <button
-          onClick={() => {
-            setActiveSection('settings');
-            requestAllPermissions();
-          }}
-          className={`flex flex-col items-center p-3 rounded-2xl transition-all ${activeSection === 'settings' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
-        >
-          <Settings size={24} />
-          <span className="text-[10px] mt-1 font-bold">الإعدادات</span>
+          <RotateCcw size={20} />
+          <span className="text-[9px] mt-1 font-bold">المسبحة</span>
         </button>
       </nav>
 

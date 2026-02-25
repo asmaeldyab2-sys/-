@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import type { Swiper as SwiperType } from 'swiper';
+import 'swiper/css';
 import { 
   Home, 
   Sprout, 
@@ -665,8 +668,9 @@ export default function App() {
   const [flipDirection, setFlipDirection] = useState<'next' | 'prev'>('next');
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
-  const audioRef = React.useRef<HTMLAudioElement | null>(null);
-  const ayahAudioRef = React.useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const ayahAudioRef = useRef<HTMLAudioElement | null>(null);
+  const swiperRef = useRef<SwiperType | null>(null);
 
   const reciters: Reciter[] = [
     { id: 'ar.alafasy', name: 'مشاري العفاسي', server: 'https://server8.mp3quran.net/afs/' },
@@ -702,7 +706,12 @@ export default function App() {
   }, [isDarkMode]);
 
   useEffect(() => {
-    // Show random dhikr notification on start
+    if (swiperRef.current && currentPage) {
+      swiperRef.current.slideTo(currentPage - 1);
+    }
+  }, [currentPage]);
+
+  useEffect(() => {
     const randomDhikr = dhikrs[Math.floor(Math.random() * dhikrs.length)];
     setNotificationDhikr(randomDhikr);
     const timer = setTimeout(() => setNotificationDhikr(null), 5000);
@@ -1781,6 +1790,45 @@ export default function App() {
                       </div>
                       
                       <p className="text-xs text-slate-400 dark:text-slate-500">جاري تشغيل السورة كاملة من المصدر المباشر</p>
+                    </div>
+                  ) : quranMode === 'read' ? (
+                    <div className="fixed inset-0 z-[150] bg-white dark:bg-slate-950 flex flex-col">
+                      <div className="absolute top-0 left-0 right-0 p-4 z-[160] flex items-center justify-between bg-gradient-to-b from-black/20 to-transparent pointer-events-none">
+                        <button 
+                          onClick={() => setSelectedSurah(null)} 
+                          className="p-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-full text-slate-600 dark:text-slate-200 shadow-lg pointer-events-auto"
+                        >
+                          <ChevronLeft className="rotate-180" />
+                        </button>
+                        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-4 py-2 rounded-full shadow-lg pointer-events-auto">
+                          <span className="font-bold text-islamic-green dark:text-emerald-400">صفحة {currentPage}</span>
+                        </div>
+                        <button 
+                          onClick={() => setQuranMode('tafsir')}
+                          className="p-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-full text-slate-600 dark:text-slate-200 shadow-lg pointer-events-auto"
+                        >
+                          <BookOpen size={20} />
+                        </button>
+                      </div>
+
+                      <Swiper
+                        onSwiper={(swiper) => swiperRef.current = swiper}
+                        initialSlide={currentPage - 1}
+                        onSlideChange={(swiper) => setCurrentPage(swiper.activeIndex + 1)}
+                        className="w-full h-full"
+                        dir="rtl"
+                      >
+                        {Array.from({ length: 604 }).map((_, i) => (
+                          <SwiperSlide key={i} className="flex items-center justify-center p-2">
+                            <img 
+                              src={`https://android.quran.com/data/zips/images_1024/page${String(i + 1).padStart(3, '0')}.png`} 
+                              alt={`Page ${i + 1}`}
+                              className="max-w-full max-h-full object-contain shadow-2xl rounded-lg"
+                              referrerPolicy="no-referrer"
+                            />
+                          </SwiperSlide>
+                        ))}
+                      </Swiper>
                     </div>
                   ) : isLoadingQuran ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">

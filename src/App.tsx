@@ -1035,16 +1035,16 @@ export default function App() {
     const zone = zones.find(z => z.name === dhikrText);
     if (!zone) return;
     
-    // Random position within 400px radius of zone center
-    const angle = Math.random() * Math.PI * 2;
-    const radius = Math.random() * 350;
-    const x = zone.x + Math.cos(angle) * radius;
-    const y = zone.y + Math.sin(angle) * radius;
-    
+    const zoneTrees = trees.filter(t => t.dhikr === dhikrText);
+    if (zoneTrees.length >= 20) {
+      showToast(`اكتمل هذا القسم (20 شجرة)`, 'info');
+      return;
+    }
+
     const newTree = {
       id: Date.now() + Math.random(),
-      pos: [x, y, 0] as [number, number, number],
-      scale: 0.8 + Math.random() * 0.4,
+      pos: [0, 0, 0] as [number, number, number],
+      scale: 1,
       dhikr: dhikrText,
       emoji: zone.emoji
     };
@@ -1052,7 +1052,7 @@ export default function App() {
     setTrees(prev => [...prev, newTree]);
     setDhikrCount(prev => prev + 1);
     setDailyProgress(prev => Math.min(prev + 0.5, 100));
-    showToast(`تم زراعة ${zone.emoji} في المزرعة!`, 'success');
+    showToast(`تم زراعة ${zone.emoji} في قسم ${dhikrText}`, 'success');
     if (window.navigator.vibrate) window.navigator.vibrate(20);
   };
 
@@ -1961,63 +1961,69 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-0 overflow-hidden bg-emerald-700 flex flex-col"
+              className="fixed inset-0 z-0 overflow-hidden bg-emerald-900 flex flex-col"
             >
-              {/* Top Section: The Forest (65% height) */}
-              <div className="relative h-[65vh] w-full overflow-hidden bg-emerald-600 shadow-inner">
-                {trees.map((tree) => (
-                  <motion.div
-                    key={tree.id}
-                    initial={{ scale: 0, rotate: -20 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    className="absolute text-4xl select-none"
-                    style={{
-                      left: `${5 + (tree.pos[0] % 90)}%`, // Keep away from edges
-                      top: `${5 + (tree.pos[1] % 85)}%`,  // Keep within forest area
-                      filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))',
-                      zIndex: 10 + Math.floor(tree.pos[1])
-                    }}
+              {/* Top Section: The Forest Grid (65% height) */}
+              <div className="relative h-[60vh] w-full bg-emerald-800 p-2 grid grid-cols-2 sm:grid-cols-3 grid-rows-3 sm:grid-rows-2 gap-2 overflow-hidden shadow-inner">
+                {zones.map((zone) => (
+                  <div 
+                    key={zone.name} 
+                    className="relative bg-emerald-700/30 rounded-2xl border border-white/5 flex flex-col items-center overflow-hidden"
                   >
-                    {tree.emoji || '🌴'}
-                  </motion.div>
-                ))}
-                
-                {trees.length === 0 && (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-white/40">
-                    <Sprout size={120} strokeWidth={1} />
-                    <p className="text-xl font-bold mt-4">ابدأ بالتسبيح لتنمو غابتك</p>
-                  </div>
-                )}
+                    {/* Zone Label */}
+                    <div className="absolute top-1 left-0 right-0 text-center z-10">
+                      <span className="text-[8px] sm:text-[10px] font-bold text-white/40 uppercase tracking-tighter">{zone.name}</span>
+                    </div>
 
-                {/* Farm Stats Overlay (Inside Forest) */}
-                <div className="absolute top-20 left-6 right-6 z-[50] pointer-events-none">
+                    {/* Trees Grid within Zone (4x5 = 20 capacity) */}
+                    <div className="w-full h-full p-4 pt-6 grid grid-cols-4 grid-rows-5 gap-1">
+                      {trees.filter(t => t.dhikr === zone.name).map((tree, idx) => (
+                        <motion.div
+                          key={tree.id}
+                          initial={{ scale: 0, y: 10 }}
+                          animate={{ scale: 1, y: 0 }}
+                          className="flex items-center justify-center text-xl sm:text-2xl select-none"
+                          style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+                        >
+                          {tree.emoji}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Farm Stats Overlay (Floating) */}
+                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[50] pointer-events-none w-full px-6">
                   <motion.div 
                     initial={{ y: -20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    className="bg-white/80 backdrop-blur-md rounded-3xl p-4 shadow-xl border border-white/20 pointer-events-auto max-w-xs mx-auto"
+                    className="bg-white/10 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-white/10 pointer-events-auto max-w-xs mx-auto flex items-center justify-between"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-black text-emerald-900">غابتك الإيمانية</h3>
-                      <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold">
-                        {trees.length} شجرة
-                      </span>
+                    <div className="flex flex-col">
+                      <h3 className="text-[10px] font-black text-white/60 uppercase">إجمالي الأشجار</h3>
+                      <span className="text-xl font-black text-white">{trees.length}</span>
                     </div>
-                    <div className="w-full bg-emerald-100 rounded-full h-1.5 overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min((trees.length / 100) * 100, 100)}%` }}
-                        className="h-full bg-emerald-500"
-                      />
+                    <div className="flex-1 mx-4">
+                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min((trees.length / 120) * 100, 100)}%` }}
+                          className="h-full bg-emerald-400"
+                        />
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-bold text-emerald-400">{Math.round((trees.length / 120) * 100)}%</span>
                     </div>
                   </motion.div>
                 </div>
               </div>
               
               {/* Bottom Section: Controls (35% height) */}
-              <div className="flex-1 bg-slate-900/95 backdrop-blur-md border-t border-white/10 p-6 z-[100] relative flex flex-col justify-between">
+              <div className="flex-1 bg-slate-950 border-t border-white/10 p-4 sm:p-6 z-[100] relative flex flex-col justify-between overflow-y-auto">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-white font-bold text-sm">ازرع شجرة بذكر الله:</h4>
+                    <h4 className="text-white/80 font-bold text-xs">اضغط للزراعة في القسم المخصص:</h4>
                     <button 
                       onClick={() => {
                         if (confirm('هل تريد حقاً مسح جميع الأشجار في غابتك؟')) {
@@ -2026,26 +2032,27 @@ export default function App() {
                           localStorage.removeItem('hasanat_trees');
                         }
                       }}
-                      className="text-[10px] text-red-400 font-bold hover:text-red-300 transition-colors"
+                      className="text-[10px] text-red-500/60 font-bold hover:text-red-400 transition-colors"
                     >
                       إعادة ضبط الغابة
                     </button>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {dhikrs.map((text) => (
                       <button
                         key={text}
                         onClick={() => addTreeInZone(text)}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-2xl text-xs font-bold shadow-lg active:scale-95 transition-all border border-emerald-500/30"
+                        className="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-3 py-3 rounded-xl text-[10px] sm:text-xs font-bold shadow-lg active:scale-95 transition-all border border-emerald-500/20 flex flex-col items-center gap-1"
                       >
-                        {text}
+                        <span className="text-lg">{zones.find(z => z.name === text)?.emoji}</span>
+                        <span className="truncate w-full text-center">{text}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <p className="text-[10px] text-slate-500 text-center italic mt-4">
+                <p className="text-[9px] text-slate-600 text-center italic mt-4">
                   "من قال سبحان الله وبحمده غُرست له نخلة في الجنة"
                 </p>
               </div>

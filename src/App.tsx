@@ -578,27 +578,39 @@ export default function App() {
   const [activeSection, setActiveSection] = useState('home');
 
   const requestAllPermissions = async () => {
-    try {
-      // Microphone
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        setPermissionsGranted(prev => ({ ...prev, microphone: true }));
+    // Microphone
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        // First check if devices exist
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const hasMic = devices.some(device => device.kind === 'audioinput');
+        
+        if (hasMic) {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+          setPermissionsGranted(prev => ({ ...prev, microphone: true }));
+        }
+      } catch (e) {
+        console.warn('Microphone permission denied or device not found', e);
       }
-      
-      // Location
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(() => {
-          setPermissionsGranted(prev => ({ ...prev, location: true }));
-        });
-      }
+    }
+    
+    // Location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        () => setPermissionsGranted(prev => ({ ...prev, location: true })),
+        (err) => console.warn('Location permission denied', err),
+        { timeout: 10000 }
+      );
+    }
 
-      // Notifications
-      if ('Notification' in window) {
+    // Notifications
+    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      try {
         const permission = await Notification.requestPermission();
         setPermissionsGranted(prev => ({ ...prev, notifications: permission === 'granted' }));
+      } catch (e) {
+        console.warn('Notification permission request failed', e);
       }
-    } catch (e) {
-      console.error('Permission request failed', e);
     }
   };
   const [selectedKnowledgeCategory, setSelectedKnowledgeCategory] = useState<string | null>(null);
@@ -607,7 +619,7 @@ export default function App() {
   const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
   const [verse, setVerse] = useState<Verse | null>(null);
   const [location, setLocation] = useState<string>('مكة المكرمة');
-  const [trees, setTrees] = useState<{ id: number; pos: [number, number, number]; scale: number; dhikr?: string }[]>([]);
+  const [trees, setTrees] = useState<{ id: number; pos: [number, number, number]; scale: number; dhikr?: string; emoji?: string }[]>([]);
   const dragX = React.useRef(0);
   const dragY = React.useRef(0);
   const [dhikrCount, setDhikrCount] = useState(0);
@@ -1831,8 +1843,20 @@ export default function App() {
                         >
                           <ChevronLeft className="rotate-180" />
                         </button>
-                        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-4 py-2 rounded-full shadow-lg pointer-events-auto">
-                          <span className="font-bold text-islamic-green dark:text-emerald-400">صفحة {currentPage}</span>
+                        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-4 py-2 rounded-full shadow-lg pointer-events-auto flex items-center gap-4">
+                          <button 
+                            onClick={() => swiperRef.current?.slidePrev()}
+                            className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors"
+                          >
+                            <ChevronLeft className="rotate-180" size={20} />
+                          </button>
+                          <span className="font-bold text-islamic-green dark:text-emerald-400 min-w-[80px] text-center">صفحة {currentPage}</span>
+                          <button 
+                            onClick={() => swiperRef.current?.slideNext()}
+                            className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors"
+                          >
+                            <ChevronLeft size={20} />
+                          </button>
                         </div>
                         <button 
                           onClick={() => setQuranMode('tafsir')}
@@ -1852,7 +1876,7 @@ export default function App() {
                         {Array.from({ length: 604 }).map((_, i) => (
                           <SwiperSlide key={i} className="flex items-center justify-center">
                             <img 
-                              src={`https://images.quran.com/images/pages/v2/page${String(i + 1).padStart(3, '0')}.png`} 
+                              src={`https://archive.org/download/quran-images-v2/page${i + 1}.png`} 
                               alt={`Page ${i + 1}`}
                               className="w-full h-full object-contain"
                               referrerPolicy="no-referrer"
@@ -1937,105 +1961,93 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-0 overflow-hidden bg-[#dcfce7]"
+              className="fixed inset-0 z-0 overflow-hidden bg-emerald-700 flex flex-col"
             >
-              {/* The Draggable Map Layer - 4000x4000 */}
-              <motion.div 
-                drag
-                dragConstraints={{ 
-                  left: -4000 + window.innerWidth, 
-                  right: 0, 
-                  top: -4000 + window.innerHeight, 
-                  bottom: 0 
-                }}
-                dragElastic={0.05}
-                initial={{ x: -2000 + (window.innerWidth / 2), y: -2000 + (window.innerHeight / 2) }}
-                className="relative w-[4000px] h-[4000px] cursor-grab active:cursor-grabbing bg-emerald-50"
-                style={{
-                  backgroundImage: `
-                    radial-gradient(#10b981 1px, transparent 1px),
-                    linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px)
-                  `,
-                  backgroundSize: '40px 40px, 200px 200px, 200px 200px',
-                }}
-              >
-                {/* Render 6 Circular Zones */}
-                {zones.map((zone, idx) => (
-                  <div
-                    key={idx}
-                    className="absolute rounded-full border-4 border-dashed border-emerald-500/20 flex flex-col items-center justify-start pt-12"
-                    style={{
-                      left: zone.x,
-                      top: zone.y,
-                      width: '800px',
-                      height: '800px',
-                      transform: 'translate(-50%, -50%)',
-                      backgroundColor: zone.color,
-                    }}
-                  >
-                    <div className="bg-white/80 backdrop-blur-md px-8 py-3 rounded-full border-2 border-emerald-500/30 shadow-xl">
-                      <p className="text-emerald-900 font-black text-2xl quran-text">{zone.name}</p>
-                    </div>
-                  </div>
-                ))}
-
+              {/* Top Section: The Forest (65% height) */}
+              <div className="relative h-[65vh] w-full overflow-hidden bg-emerald-600 shadow-inner">
                 {trees.map((tree) => (
-                  <PalmTree key={tree.id} tree={tree} />
-                ))}
-              </motion.div>
-              
-              {/* Fixed UI Overlay - High Z-Index (1000) */}
-              <div className="fixed top-24 left-0 right-0 px-6 pointer-events-none flex flex-col items-center gap-2 z-[1000]">
-                <motion.div 
-                  initial={{ y: -20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  className="bg-white/95 backdrop-blur-3xl rounded-[32px] p-4 shadow-2xl border border-emerald-500/30 inline-block text-center pointer-events-auto"
-                >
-                  <p className="text-lg font-black text-emerald-800 mb-1">مزرعة الأذكار الكبرى</p>
-                  <div className="flex items-center justify-center gap-6">
-                    <div className="text-center">
-                      <p className="text-[10px] text-emerald-600/60 uppercase tracking-widest font-bold">أشجارك</p>
-                      <p className="text-2xl font-black text-emerald-900">{trees.length}</p>
-                    </div>
-                    <div className="w-px h-8 bg-emerald-500/20" />
-                    <div className="text-center">
-                      <p className="text-[10px] text-emerald-600/60 uppercase tracking-widest font-bold">الهدف</p>
-                      <p className="text-2xl font-black text-emerald-900">٢٠٠</p>
-                    </div>
-                  </div>
-                  <div className="w-48 bg-emerald-100 rounded-full h-2 overflow-hidden border border-emerald-200 mt-3 mx-auto">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min((trees.length / 200) * 100, 100)}%` }}
-                      className="h-full bg-emerald-500"
-                    />
-                  </div>
-                  <button 
-                    onClick={() => {
-                      if (confirm('هل تريد حقاً مسح جميع الأشجار في مزرعتك؟')) {
-                        setTrees([]);
-                        setDhikrCount(0);
-                      }
+                  <motion.div
+                    key={tree.id}
+                    initial={{ scale: 0, rotate: -20 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    className="absolute text-4xl select-none"
+                    style={{
+                      left: `${5 + (tree.pos[0] % 90)}%`, // Keep away from edges
+                      top: `${5 + (tree.pos[1] % 85)}%`,  // Keep within forest area
+                      filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))',
+                      zIndex: 10 + Math.floor(tree.pos[1])
                     }}
-                    className="text-[10px] text-red-500/60 hover:text-red-600 font-bold uppercase tracking-wider mt-2 transition-colors"
                   >
-                    إعادة ضبط المزرعة
-                  </button>
-                </motion.div>
-              </div>
-
-              {/* Fixed Bottom Dhikr Panel - High Z-Index (1000) */}
-              <div className="fixed bottom-32 left-0 right-0 px-6 flex flex-wrap justify-center gap-2 z-[1000] pointer-events-none">
-                {dhikrs.map((text) => (
-                  <button
-                    key={text}
-                    onClick={() => addTreeInZone(text)}
-                    className="bg-emerald-700 text-white px-5 py-3 rounded-[20px] text-sm font-black shadow-xl active:scale-95 transition-all border-b-4 border-emerald-900 hover:bg-emerald-600 pointer-events-auto"
-                  >
-                    {text}
-                  </button>
+                    {tree.emoji || '🌴'}
+                  </motion.div>
                 ))}
+                
+                {trees.length === 0 && (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-white/40">
+                    <Sprout size={120} strokeWidth={1} />
+                    <p className="text-xl font-bold mt-4">ابدأ بالتسبيح لتنمو غابتك</p>
+                  </div>
+                )}
+
+                {/* Farm Stats Overlay (Inside Forest) */}
+                <div className="absolute top-20 left-6 right-6 z-[50] pointer-events-none">
+                  <motion.div 
+                    initial={{ y: -20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    className="bg-white/80 backdrop-blur-md rounded-3xl p-4 shadow-xl border border-white/20 pointer-events-auto max-w-xs mx-auto"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-black text-emerald-900">غابتك الإيمانية</h3>
+                      <span className="bg-emerald-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold">
+                        {trees.length} شجرة
+                      </span>
+                    </div>
+                    <div className="w-full bg-emerald-100 rounded-full h-1.5 overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((trees.length / 100) * 100, 100)}%` }}
+                        className="h-full bg-emerald-500"
+                      />
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+              
+              {/* Bottom Section: Controls (35% height) */}
+              <div className="flex-1 bg-slate-900/95 backdrop-blur-md border-t border-white/10 p-6 z-[100] relative flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-white font-bold text-sm">ازرع شجرة بذكر الله:</h4>
+                    <button 
+                      onClick={() => {
+                        if (confirm('هل تريد حقاً مسح جميع الأشجار في غابتك؟')) {
+                          setTrees([]);
+                          setDhikrCount(0);
+                          localStorage.removeItem('hasanat_trees');
+                        }
+                      }}
+                      className="text-[10px] text-red-400 font-bold hover:text-red-300 transition-colors"
+                    >
+                      إعادة ضبط الغابة
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    {dhikrs.map((text) => (
+                      <button
+                        key={text}
+                        onClick={() => addTreeInZone(text)}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-2xl text-xs font-bold shadow-lg active:scale-95 transition-all border border-emerald-500/30"
+                      >
+                        {text}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-slate-500 text-center italic mt-4">
+                  "من قال سبحان الله وبحمده غُرست له نخلة في الجنة"
+                </p>
               </div>
             </motion.div>
           )}

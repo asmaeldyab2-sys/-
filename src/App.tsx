@@ -635,6 +635,22 @@ export default function App() {
   const [recitationWords, setRecitationWords] = useState<string[]>([]);
   const [targetRecitationText, setTargetRecitationText] = useState('الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ');
   const [notificationDhikr, setNotificationDhikr] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'info' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const normalizeArabic = (text: string) => {
+    return text
+      .replace(/[إأآا]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .replace(/ى/g, 'ي')
+      .replace(/[\u064B-\u0652]/g, '')
+      .replace(/[^\u0621-\u064A\s]/g, '')
+      .trim();
+  };
 
   // Quran Reader State
   const [surahs, setSurahs] = useState<Surah[]>([]);
@@ -1024,6 +1040,7 @@ export default function App() {
     setTrees(prev => [...prev, newTree]);
     setDhikrCount(prev => prev + 1);
     setDailyProgress(prev => Math.min(prev + 0.5, 100));
+    showToast(`تم زراعة ${zone.emoji} في المزرعة!`, 'success');
     if (window.navigator.vibrate) window.navigator.vibrate(20);
   };
 
@@ -1153,7 +1170,18 @@ export default function App() {
 
                   <div className="space-y-4">
                     {adhkarData[selectedAdhkarCategory].items.map((item, idx) => (
-                      <div key={idx} className="p-6 bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 text-right">
+                      <div 
+                        key={idx} 
+                        onClick={() => {
+                          addTreeInZone(selectedAdhkarCategory); // Use category as zone name if it matches
+                          // If category doesn't match, just plant a random one
+                          if (!zones.find(z => z.name === selectedAdhkarCategory)) {
+                            const randomZone = zones[Math.floor(Math.random() * zones.length)];
+                            addTreeInZone(randomZone.name);
+                          }
+                        }}
+                        className="p-6 bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-black/5 dark:border-white/5 text-right cursor-pointer active:scale-[0.98] transition-transform"
+                      >
                         <p className="text-lg text-slate-700 dark:text-slate-200 leading-relaxed quran-text">{item}</p>
                       </div>
                     ))}
@@ -1463,14 +1491,14 @@ export default function App() {
                                   const transcript = event.results[i][0].transcript.trim().toLowerCase();
                                   if (event.results[i].isFinal) {
                                     const spokenWords = transcript.split(' ');
-                                    const lastSpoken = spokenWords[spokenWords.length - 1].replace(/[^\u0621-\u064A]/g, '');
+                                    const lastSpoken = normalizeArabic(spokenWords[spokenWords.length - 1]);
                                     
-                                    const targetWords = targetRecitationText.split(' ').map(w => w.replace(/[^\u0621-\u064A]/g, ''));
+                                    const targetWords = targetRecitationText.split(' ').map(w => normalizeArabic(w));
                                     const nextWordIndex = recitationWords.length;
                                     const nextTargetWord = targetWords[nextWordIndex];
 
-                                    if (lastSpoken === nextTargetWord) {
-                                      setRecitationWords(prev => [...prev, lastSpoken]);
+                                    if (lastSpoken === nextTargetWord || (nextTargetWord && lastSpoken.includes(nextTargetWord))) {
+                                      setRecitationWords(prev => [...prev, targetRecitationText.split(' ')[nextWordIndex]]);
                                       setWrongWords([]);
                                     } else {
                                       setWrongWords(prev => [...prev, lastSpoken]);
@@ -1559,7 +1587,10 @@ export default function App() {
                     </div>
                     
                     <button 
-                      onClick={() => setMisbahaCounts(prev => ({ ...prev, [dhikr]: prev[dhikr] + 1 }))}
+                      onClick={() => {
+                        setMisbahaCounts(prev => ({ ...prev, [dhikr]: prev[dhikr] + 1 }));
+                        addTreeInZone(dhikr);
+                      }}
                       className="flex-1 mr-4 py-4 px-6 bg-islamic-green/5 dark:bg-emerald-500/10 rounded-2xl text-right hover:bg-islamic-green/10 dark:hover:bg-emerald-500/20 transition-all active:scale-95"
                     >
                       <span className="text-xl font-bold text-slate-800 dark:text-white quran-text">{dhikr}</span>
@@ -1819,11 +1850,11 @@ export default function App() {
                         dir="rtl"
                       >
                         {Array.from({ length: 604 }).map((_, i) => (
-                          <SwiperSlide key={i} className="flex items-center justify-center p-2">
+                          <SwiperSlide key={i} className="flex items-center justify-center">
                             <img 
-                              src={`https://android.quran.com/data/zips/images_1024/page${String(i + 1).padStart(3, '0')}.png`} 
+                              src={`https://images.quran.com/images/pages/v2/page${String(i + 1).padStart(3, '0')}.png`} 
                               alt={`Page ${i + 1}`}
-                              className="max-w-full max-h-full object-contain shadow-2xl rounded-lg"
+                              className="w-full h-full object-contain"
                               referrerPolicy="no-referrer"
                             />
                           </SwiperSlide>
@@ -2544,6 +2575,20 @@ export default function App() {
               </div>
             </div>
             <Check size={20} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 bg-slate-900/90 dark:bg-emerald-600/90 backdrop-blur-md text-white rounded-full shadow-2xl border border-white/10 flex items-center gap-3 min-w-[200px] justify-center"
+          >
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-sm font-bold">{toast.message}</span>
           </motion.div>
         )}
       </AnimatePresence>

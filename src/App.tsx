@@ -1021,34 +1021,39 @@ export default function App() {
   };
 
   const farmZones = [
-    { id: 1, name: "سبحان الله", emoji: "🌳" },
-    { id: 2, name: "الحمد لله", emoji: "🌴" },
+    { id: 1, name: "سبحان الله", emoji: "🌴" },
+    { id: 2, name: "الحمد لله", emoji: "🌳" },
     { id: 3, name: "الله أكبر", emoji: "🌲" },
-    { id: 4, name: "لا إله إلا الله", emoji: "🍀" },
+    { id: 4, name: "لا إله إلا الله", emoji: "🌿" },
     { id: 5, name: "أستغفر الله", emoji: "🌸" },
-    { id: 6, name: "لا حول ولا قوة إلا بالله", emoji: "🌿" },
+    { id: 6, name: "لا حول ولا قوة", emoji: "🍀" },
   ];
 
-  const plantTree = (dhikrName: string) => {
-    const zone = farmZones.find(z => z.name === dhikrName);
+  const plantTree = (idOrName: number | string, emoji?: string) => {
+    let zone;
+    if (typeof idOrName === 'number') {
+      zone = farmZones.find(z => z.id === idOrName);
+    } else {
+      zone = farmZones.find(z => z.name.includes(idOrName as string) || (idOrName as string).includes(z.name));
+    }
+    
     if (!zone) return;
 
-    // Random offset within the spot (0-100 range)
-    const x = 20 + Math.random() * 60;
-    const y = 20 + Math.random() * 60;
+    const zoneTreesCount = trees.filter(t => t.zoneId === zone.id).length;
+    if (zoneTreesCount >= 200) return;
 
     const newTree = {
       id: Date.now() + Math.random(),
-      pos: [x, y] as [number, number],
+      pos: [0, 0] as [number, number],
       zoneId: zone.id,
-      emoji: zone.emoji
+      emoji: emoji || zone.emoji
     };
 
     setTrees(prev => [...prev, newTree]);
     setDhikrCount(prev => prev + 1);
     setDailyProgress(prev => Math.min(prev + 1, 100));
     
-    if (window.navigator.vibrate) window.navigator.vibrate(10);
+    if (window.navigator.vibrate) window.navigator.vibrate(40);
   };
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
@@ -1948,80 +1953,74 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-0 flex flex-col bg-white"
+              className="fixed inset-0 z-[100] flex flex-col bg-gradient-to-b from-[#87CEEB] via-[#a8e6cf] to-[#2ecc71] overflow-hidden"
             >
-              {/* Forest Area (Top 2/3) */}
-              <div 
-                className="flex-[2] relative grid grid-cols-3 gap-4 p-5 bg-cover bg-center"
-                style={{ 
-                  backgroundImage: "url('https://picsum.photos/id/1067/1920/1080')"
-                }}
-              >
-                {/* Stats Overlay */}
-                <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-center pointer-events-none">
-                  <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10">
-                    <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest">أشجارك</p>
-                    <p className="text-xl font-black text-white">{trees.length}</p>
-                  </div>
-                  <button 
-                    onClick={() => confirm('هل تريد مسح المزرعة؟') && setTrees([])}
-                    className="p-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white/60 hover:text-red-400 pointer-events-auto"
-                  >
-                    <RotateCcw size={16} />
-                  </button>
-                </div>
-
-                {farmZones.map((zone) => (
-                  <div 
-                    key={zone.id}
-                    className="relative border-2 border-dashed border-[#8b4513]/60 rounded-full h-32 sm:h-40 flex items-center justify-center bg-white/5 backdrop-blur-[2px]"
-                  >
-                    <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-white bg-[#8b4513]/80 px-2 py-0.5 rounded-full whitespace-nowrap">
-                      {zone.name}
-                    </span>
-                    
-                    {/* Trees in this spot */}
-                    {trees.filter(t => t.zoneId === zone.id).map((tree) => (
-                      <motion.div
-                        key={tree.id}
-                        initial={{ scale: 0, y: 20 }}
-                        animate={{ scale: 1, y: 0 }}
-                        className="absolute text-3xl sm:text-4xl select-none"
-                        style={{
-                          left: `${tree.pos[0]}%`,
-                          top: `${tree.pos[1]}%`,
-                          transform: 'translate(-50%, -50%)',
-                          filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.2))'
-                        }}
-                      >
-                        {tree.emoji}
-                      </motion.div>
-                    ))}
-                  </div>
-                ))}
+              {/* Stats Header */}
+              <div className="h-20 bg-black/30 backdrop-blur-md flex items-center justify-center text-white font-bold z-20">
+                غابتك الإيمانية: <span className="mr-2 text-emerald-400">{trees.length}</span> شجرة
+                <button 
+                  onClick={() => confirm('هل تريد مسح المزرعة؟') && setTrees([])}
+                  className="absolute right-6 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+                >
+                  <RotateCcw size={16} />
+                </button>
+                <button 
+                  onClick={() => setActiveSection('home')}
+                  className="absolute left-6 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+                >
+                  <ChevronLeft className="rotate-180" size={16} />
+                </button>
               </div>
 
-              {/* Buttons Area (Bottom 1/3) */}
-              <div className="flex-1 bg-white dark:bg-slate-900 grid grid-cols-2 gap-3 p-4 border-t-4 border-emerald-500 overflow-y-auto">
+              {/* Plots Container */}
+              <div className="flex-1 grid grid-cols-2 gap-4 p-4 content-center">
+                {farmZones.map((zone) => {
+                  const zoneTrees = trees.filter(t => t.zoneId === zone.id);
+                  return (
+                    <div 
+                      key={zone.id}
+                      className="relative bg-white/20 border-2 border-white/90 rounded-[30px] h-36 flex flex-wrap justify-center content-center shadow-lg overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(139,69,19,0.4)_0%,transparent_70%)] z-0" />
+                      {zoneTrees.map((tree) => (
+                        <span 
+                          key={tree.id} 
+                          className="tree-item z-10 animate-[pop_0.3s_ease] -m-[2px]"
+                          style={{ 
+                            fontSize: zoneTrees.length > 60 ? '0.6rem' : zoneTrees.length > 25 ? '1rem' : '1.5rem'
+                          }}
+                        >
+                          {tree.emoji}
+                        </span>
+                      ))}
+                      <div className="absolute bottom-1 bg-black/50 text-white text-[0.7rem] px-2 py-0.5 rounded-xl z-20">
+                        {zone.name}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Controls Panel */}
+              <div className="bg-[#1a2233]/95 p-4 rounded-t-[30px] grid grid-cols-3 gap-2 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.2)]">
                 {farmZones.map((zone) => (
                   <button
                     key={zone.id}
-                    onClick={() => plantTree(zone.name)}
-                    className="flex flex-col items-center justify-center py-4 px-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm active:scale-95 transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/20 group"
+                    onClick={() => plantTree(zone.id, zone.emoji)}
+                    className="bg-white/10 border border-emerald-500 text-white rounded-[15px] py-3 px-1 flex flex-col items-center cursor-pointer active:scale-95 transition-all hover:bg-emerald-500/20"
                   >
-                    <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">{zone.emoji}</span>
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{zone.name}</span>
+                    <span className="text-xl mb-1">{zone.emoji}</span>
+                    <span className="text-[0.7rem] font-bold whitespace-nowrap">{zone.name}</span>
                   </button>
                 ))}
               </div>
 
-              {/* Back Button */}
-              <button 
-                onClick={() => setActiveSection('home')}
-                className="fixed top-4 right-4 p-3 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-black/5 text-slate-800 z-30"
-              >
-                <ChevronLeft className="rotate-180" size={20} />
-              </button>
+              <style>{`
+                @keyframes pop {
+                  from { transform: scale(0); }
+                  to { transform: scale(1); }
+                }
+              `}</style>
             </motion.div>
           )}
 

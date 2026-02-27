@@ -484,6 +484,12 @@ const PalmTree = React.memo(({ tree }: { tree: { id: number; pos: [number, numbe
 });
 
 function SplashScreen({ onComplete }: { onComplete: () => void }) {
+  useEffect(() => {
+    // Safety timeout to ensure splash screen closes even if animation fails
+    const timer = setTimeout(onComplete, 4000);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
   return (
     <motion.div 
       initial={{ opacity: 1 }}
@@ -555,12 +561,18 @@ export default function App() {
     notifications: false
   });
   const [currentFarmIndex, setCurrentFarmIndex] = useState<number>(() => {
-    const saved = localStorage.getItem('hasanat_current_farm_index');
-    return saved ? parseInt(saved) : 0;
+    try {
+      const saved = localStorage.getItem('hasanat_current_farm_index');
+      const parsed = saved ? parseInt(saved) : 0;
+      return isNaN(parsed) ? 0 : parsed;
+    } catch { return 0; }
   });
   const [viewingFarmIndex, setViewingFarmIndex] = useState<number>(() => {
-    const saved = localStorage.getItem('hasanat_current_farm_index');
-    return saved ? parseInt(saved) : 0;
+    try {
+      const saved = localStorage.getItem('hasanat_current_farm_index');
+      const parsed = saved ? parseInt(saved) : 0;
+      return isNaN(parsed) ? 0 : parsed;
+    } catch { return 0; }
   });
   const [activeSection, setActiveSection] = useState<Section>('home');
   const [pageTexts, setPageTexts] = useState<Record<number, string>>({});
@@ -680,8 +692,11 @@ export default function App() {
   const [activeAyahAudio, setActiveAyahAudio] = useState<number | null>(null);
   const [quranMode, setQuranMode] = useState<'read' | 'listen' | 'tafsir'>('read');
   const [currentPage, setCurrentPage] = useState<number>(() => {
-    const saved = localStorage.getItem('hasanat_last_quran_page');
-    return saved ? parseInt(saved) : 1;
+    try {
+      const saved = localStorage.getItem('hasanat_last_quran_page');
+      const parsed = saved ? parseInt(saved) : 1;
+      return isNaN(parsed) ? 1 : parsed;
+    } catch { return 1; }
   });
   const [jumpPage, setJumpPage] = useState<string>('');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -976,26 +991,51 @@ export default function App() {
 
   useEffect(() => {
     // Load persisted data
-    const savedDhikrCount = localStorage.getItem('hasanat_dhikr_count');
-    if (savedDhikrCount) setDhikrCount(parseInt(savedDhikrCount));
+    try {
+      const savedDhikrCount = localStorage.getItem('hasanat_dhikr_count');
+      if (savedDhikrCount) {
+        const parsed = parseInt(savedDhikrCount);
+        if (!isNaN(parsed)) setDhikrCount(parsed);
+      }
 
-    const savedTrees = localStorage.getItem('hasanat_trees_v2');
-    if (savedTrees) setTrees(JSON.parse(savedTrees));
+      const savedTrees = localStorage.getItem('hasanat_trees_v2');
+      if (savedTrees) {
+        const parsed = JSON.parse(savedTrees);
+        if (Array.isArray(parsed)) setTrees(parsed);
+      }
 
-    const savedMisbaha = localStorage.getItem('hasanat_misbaha');
-    if (savedMisbaha) setMisbahaCounts(JSON.parse(savedMisbaha));
+      const savedMisbaha = localStorage.getItem('hasanat_misbaha');
+      if (savedMisbaha) {
+        const parsed = JSON.parse(savedMisbaha);
+        if (parsed && typeof parsed === 'object') setMisbahaCounts(parsed);
+      }
 
-    const savedLastRead = localStorage.getItem('hasanat_last_read');
-    if (savedLastRead) setLastRead(JSON.parse(savedLastRead));
-    
-    const savedBookmarks = localStorage.getItem('hasanat_bookmarks');
-    if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
+      const savedLastRead = localStorage.getItem('hasanat_last_read');
+      if (savedLastRead) {
+        const parsed = JSON.parse(savedLastRead);
+        if (parsed && parsed.surah) setLastRead(parsed);
+      }
+      
+      const savedBookmarks = localStorage.getItem('hasanat_bookmarks');
+      if (savedBookmarks) {
+        const parsed = JSON.parse(savedBookmarks);
+        if (Array.isArray(parsed)) setBookmarks(parsed);
+      }
 
-    const savedDailyProgress = localStorage.getItem('hasanat_daily_progress');
-    if (savedDailyProgress) setDailyProgress(parseInt(savedDailyProgress));
+      const savedDailyProgress = localStorage.getItem('hasanat_daily_progress');
+      if (savedDailyProgress) {
+        const parsed = parseInt(savedDailyProgress);
+        if (!isNaN(parsed)) setDailyProgress(parsed);
+      }
 
-    const savedNawawi = localStorage.getItem('hasanat_nawawi_progress');
-    if (savedNawawi) setNawawiProgress(JSON.parse(savedNawawi));
+      const savedNawawi = localStorage.getItem('hasanat_nawawi_progress');
+      if (savedNawawi) {
+        const parsed = JSON.parse(savedNawawi);
+        if (parsed && typeof parsed === 'object') setNawawiProgress(parsed);
+      }
+    } catch (e) {
+      console.error("Error loading persisted data", e);
+    }
 
     // Request permissions
     requestAllPermissions();

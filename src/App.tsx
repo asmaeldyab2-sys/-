@@ -690,7 +690,12 @@ export default function App() {
   const [tafsirContent, setTafsirContent] = useState<string | null>(null);
   const [activeAyahAudio, setActiveAyahAudio] = useState<number | null>(null);
   const [quranMode, setQuranMode] = useState<'read' | 'listen' | 'tafsir'>('read');
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState<number>(() => {
+    const saved = localStorage.getItem('hasanat_last_quran_page');
+    return saved ? parseInt(saved) : 1;
+  });
+  const [jumpPage, setJumpPage] = useState<string>('');
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [flipDirection, setFlipDirection] = useState<'next' | 'prev'>('next');
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
@@ -732,10 +737,30 @@ export default function App() {
   }, [isDarkMode]);
 
   useEffect(() => {
+    localStorage.setItem('hasanat_last_quran_page', currentPage.toString());
     if (swiperRef.current && currentPage) {
       swiperRef.current.slideTo(currentPage - 1);
     }
   }, [currentPage]);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    }
+  };
 
   useEffect(() => {
     const randomDhikr = dhikrs[Math.floor(Math.random() * dhikrs.length)];
@@ -1026,7 +1051,7 @@ export default function App() {
     { id: 3, name: "الله أكبر", emoji: "🌲" },
     { id: 4, name: "لا إله إلا الله", emoji: "🌿" },
     { id: 5, name: "أستغفر الله", emoji: "🌸" },
-    { id: 6, name: "لا حول ولا قوة", emoji: "🍀" },
+    { id: 6, name: "لا حول ولا قوة إلا بالله", emoji: "🍀" },
   ];
 
   const plantTree = (idOrName: number | string, emoji?: string) => {
@@ -1061,17 +1086,30 @@ export default function App() {
 
   return (
     <div className={`flex flex-col h-screen w-full overflow-hidden shadow-2xl relative transition-colors duration-300 bg-slate-900 text-slate-100`}>
-      {/* Header */}
-      <header className="p-6 flex items-center justify-between z-20 bg-slate-900/80 backdrop-blur-sm">
-        <button 
-          onClick={() => setActiveSection('settings')}
-          className="p-2 bg-slate-800 rounded-full shadow-sm text-slate-500"
-        >
-          <Settings size={20} />
-        </button>
-        <h1 className="text-3xl font-bold text-emerald-500">حسنات</h1>
-        <div className="w-10" />
-      </header>
+        {/* Header */}
+        {activeSection !== 'farm' && (
+          <header className="p-6 flex items-center justify-between z-20 bg-slate-900/80 backdrop-blur-sm">
+            <button 
+              onClick={() => setActiveSection('settings')}
+              className="p-2 bg-slate-800 rounded-full shadow-sm text-slate-500"
+            >
+              <Settings size={20} />
+            </button>
+            <h1 className="text-3xl font-bold text-emerald-500">حسنات</h1>
+            <div className="flex items-center gap-2">
+              {deferredPrompt && (
+                <button 
+                  onClick={handleInstallClick}
+                  className="p-2 bg-emerald-500/10 text-emerald-500 rounded-full"
+                  title="تثبيت التطبيق"
+                >
+                  <Download size={20} />
+                </button>
+              )}
+              <div className="w-10" />
+            </div>
+          </header>
+        )}
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-24 px-4 scroll-smooth">
@@ -1858,6 +1896,30 @@ export default function App() {
                         </button>
                       </div>
 
+                      <div className="absolute bottom-0 left-0 right-0 p-4 z-[160] flex items-center justify-center bg-gradient-to-t from-black/20 to-transparent pointer-events-none">
+                        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md px-4 py-2 rounded-full shadow-lg pointer-events-auto flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate-500">انتقال إلى صفحة:</span>
+                          <input 
+                            type="number" 
+                            min="1" 
+                            max="604"
+                            value={jumpPage}
+                            onChange={(e) => setJumpPage(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const p = parseInt(jumpPage);
+                                if (p >= 1 && p <= 604) {
+                                  setCurrentPage(p);
+                                  swiperRef.current?.slideTo(p - 1);
+                                  setJumpPage('');
+                                }
+                              }
+                            }}
+                            className="w-12 bg-slate-100 dark:bg-slate-700 border-none rounded-lg px-1 py-0.5 text-center font-bold text-islamic-green focus:ring-1 focus:ring-islamic-green text-xs"
+                          />
+                        </div>
+                      </div>
+
                       <Swiper
                         onSwiper={(swiper) => swiperRef.current = swiper}
                         initialSlide={currentPage - 1}
@@ -1866,9 +1928,9 @@ export default function App() {
                         dir="rtl"
                       >
                         {Array.from({ length: 604 }).map((_, i) => (
-                          <SwiperSlide key={i} className="flex items-center justify-center">
+                          <SwiperSlide key={i} className="flex items-center justify-center bg-[#fdfcf0]">
                             <img 
-                              src={`https://archive.org/download/quran-images-v2/page${i + 1}.png`} 
+                              src={`https://www.searchtruth.com/quran/images2/page-${i + 1}.png`} 
                               alt={`Page ${i + 1}`}
                               className="w-full h-full object-contain"
                               referrerPolicy="no-referrer"
@@ -2484,7 +2546,8 @@ export default function App() {
       </AnimatePresence>
 
       {/* Navigation */}
-      <nav className={`fixed bottom-6 left-6 right-6 backdrop-blur-xl rounded-3xl shadow-2xl border p-1 flex justify-around items-center z-50 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800/90 border-white/5' : 'bg-white/90 border-black/5'}`}>
+      {activeSection !== 'farm' && (
+        <nav className={`fixed bottom-6 left-6 right-6 backdrop-blur-xl rounded-3xl shadow-2xl border p-1 flex justify-around items-center z-50 transition-colors duration-300 ${isDarkMode ? 'bg-slate-800/90 border-white/5' : 'bg-white/90 border-black/5'}`}>
         <button
           onClick={() => setActiveSection('home')}
           className={`flex flex-col items-center p-2 rounded-2xl transition-all ${activeSection === 'home' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
@@ -2521,6 +2584,7 @@ export default function App() {
           <span className="text-[9px] mt-1 font-bold">المسبحة</span>
         </button>
       </nav>
+      )}
 
       <AnimatePresence>
         {notificationDhikr && (

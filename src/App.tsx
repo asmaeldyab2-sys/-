@@ -195,30 +195,9 @@ const knowledgeData: Record<string, Record<string, string>> = {
   },
   'الحديث': {
     'أهمية السنة النبوية': 'السنة هي الوحي الثاني، وهي شارحة للقرآن ومبينة لمجمله. قال ﷺ: "ألا إني أوتيت القرآن ومثله معه". وقال الإمام البربهاري: "الإسلام هو السنة، والسنة هي الإسلام". ولا يستقيم إيمان عبد حتى يؤمن بالسنة ويعمل بها ويقدمها على قول كل أحد.',
-    'الأربعين النووية ١: الأعمال بالنيات': 'عن أمير المؤمنين أبي حفص عمر بن الخطاب رضي الله عنه قال: سمعت رسول الله ﷺ يقول: "إنما الأعمال بالنيات، وإنما لكل امرئ ما نوى..."\n\nالشرح: النية هي أساس قبول العمل، فمن كان قصده الله ورسوله قبل عمله، ومن كان قصده الدنيا أو امرأة ينكحها فليس له إلا ما نوى.',
-    'الأربعين النووية ٢: حديث جبريل': 'عن عمر رضي الله عنه أيضاً قال: بينما نحن جلوس عند رسول الله ﷺ ذات يوم إذ طلع علينا رجل شديد بياض الثياب شديد سواد الشعر...\n\nالشرح: الحديث يبين مراتب الدين الثلاث: الإسلام (الأعمال الظاهرة)، الإيمان (الاعتقادات الباطنة)، والإحسان (مراقبة الله).',
-    'الأربعين النووية ٣: أركان الإسلام': 'عن أبي عبد الرحمن عبد الله بن عمر بن الخطاب رضي الله عنهما قال: سمعت رسول الله ﷺ يقول: "بني الإسلام على خمس..."\n\nالشرح: الإسلام بناء عظيم يقوم على خمسة أعمدة أساسية: الشهادتان، الصلاة، الزكاة، الحج، وصوم رمضان.',
-    'الأربعين النووية ٤: مراحل الخلق': 'عن أبي عبد الرحمن عبد الله بن مسعود رضي الله عنه قال: حدثنا رسول الله ﷺ وهو الصادق المصدوق: "إن أحدكم يجمع خلقه في بطن أمه أربعين يوماً نطفة..."\n\nالشرح: يبين أطوار الجنين وكتابة القدر (الرزق، الأجل، العمل، والشقاوة أو السعادة).',
-    'الأربعين النووية ٥: النهي عن البدع': 'عن أم المؤمنين أم عبد الله عائشة رضي الله عنها قالت: قال رسول الله ﷺ: "من أحدث في أمرنا هذا ما ليس منه فهو رد".\n\nالشرح: الدين كامل لا يحتاج لزيادة، وكل عمل تعبدي لم يشرعه الله ورسوله فهو باطل ومردود على صاحبه.',
-    'الأربعين النووية ٦: الورع': 'عن أبي عبد الله النعمان بن بشير رضي الله عنهما قال: سمعت رسول الله ﷺ يقول: "إن الحلال بين وإن الحرام بين وبينهما أمور مشتبهات..."\n\nالشرح: المؤمن يبتعد عن الشبهات حماية لدينه وعرضه، وصلاح الجسد بصلاح القلب.',
-    'الأربعين النووية ٧: النصيحة': 'عن أبي رقية تميم بن أوس الداري رضي الله عنه أن النبي ﷺ قال: "الدين النصيحة". قلنا: لمن؟ قال: "لله ولكتابه ولرسوله ولأئمة المسلمين وعامتهم".\n\nالشرح: الدين يقوم على النصح والإخلاص في التعامل مع الخالق والخلق.',
-    'الأربعين النووية ٨: حرمة المسلم': 'عن ابن عمر رضي الله عنهما أن رسول الله ﷺ قال: "أمرت أن أقاتل الناس حتى يشهدوا أن لا إله إلا الله وأن محمداً رسول الله..."\n\nالشرح: الإسلام يحمي دماء وأموال من دخل فيه، والحساب على الله في السرائر.',
-    'الأربعين النووية ٩: الاستطاعة': 'عن أبي هريرة عبد الرحمن بن صخر رضي الله عنه قال: سمعت رسول الله ﷺ يقول: "ما نهيتكم عنه فاجتنبوه، وما أمرتكم به فأتوا منه ما استطعتم..."\n\nالشرح: النهي يجب تركه مطلقاً، أما الأمر فمقيد بالقدرة والاستطاعة.',
-    'الأربعين النووية ١٠: الطيب من الكسب': 'عن أبي هريرة رضي الله عنه قال: قال رسول الله ﷺ: "إن الله تعالى طيب لا يقبل إلا طيباً..."\n\nالشرح: أكل الحلال شرط لقبول الدعاء، والمال الحرام يمنع استجابة العبادات.',
-    'الأربعين النووية ١١: دع ما يريبك': 'عن أبي محمد الحسن بن علي رضي الله عنهما قال: حفظت من رسول الله ﷺ: "دع ما يريبك إلى ما لا يريبك".\n\nالشرح: الورع هو ترك الشبهات والاطمئنان للحلال المحض.',
-    'الأربعين النووية ١٢: من حسن إسلام المرء': 'عن أبي هريرة رضي الله عنه قال: قال رسول الله ﷺ: "من حسن إسلام المرء تركه ما لا يعنيه".\n\nالشرح: الاشتغال بما ينفع في الدين والدنيا وترك الفضول.',
-    'الأربعين النووية ١٣: حب الخير للغير': 'عن أبي حمزة أنس بن مالك رضي الله عنه قال: قال رسول الله ﷺ: "لا يؤمن أحدكم حتى يحب لأخيه ما يحب لنفسه".\n\nالشرح: كمال الإيمان يقتضي سلامة الصدر ومحبة الخير للمسلمين.',
-    'الأربعين النووية ١٤: حرمة دم المسلم': 'عن ابن مسعود رضي الله عنه قال: قال رسول الله ﷺ: "لا يحل دم امرئ مسلم إلا بإحدى ثلاث: الثيب الزاني، والنفس بالنفس، والتارك لدينه المفارق للجماعة".',
-    'الأربعين النووية ١٥: إكرام الضيف والجار': 'عن أبي هريرة رضي الله عنه أن رسول الله ﷺ قال: "من كان يؤمن بالله واليوم الآخر فليقل خيراً أو ليصمت..."',
-    'الأربعين النووية ١٦: النهي عن الغضب': 'عن أبي هريرة رضي الله عنه أن رجلاً قال للنبي ﷺ: أوصني. قال: "لا تغضب". فردد مراراً، قال: "لا تغضب".',
-    'الأربعين النووية ١٧: الإحسان في كل شيء': 'عن أبي يعلى شداد بن أوس رضي الله عنه قال: قال رسول الله ﷺ: "إن الله كتب الإحسان على كل شيء، فإذا قتلتم فأحسنوا القتلة..."',
-    'الأربعين النووية ١٨: التقوى وحسن الخلق': 'عن أبي ذر ومعاذ بن جبل رضي الله عنهما أن رسول الله ﷺ قال: "اتق الله حيثما كنت، وأتبع السيئة الحسنة تمحها، وخالق الناس بخلق حسن".',
-    'الأربعين النووية ١٩: الاستعانة بالله': 'عن ابن عباس رضي الله عنهما قال: كنت خلف النبي ﷺ يوماً فقال: "يا غلام إني أعلمك كلمات: احفظ الله يحفظك..."',
-    'الأربعين النووية ٢٠: الحياء': 'عن ابن مسعود رضي الله عنه قال: قال رسول الله ﷺ: "إن مما أدرك الناس من كلام النبوة الأولى: إذا لم تستح فاصنع ما شئت".',
     'أقسام الحديث من حيث القبول': '1. الصحيح: ما اتصل سنده بنقل العدل الضابط عن مثله إلى منتهاه من غير شذوذ ولا علة.\n2. الحسن: ما اتصل سنده بنقل العدل الذي خف ضبطه.\n3. الضعيف: ما لم يجتمع فيه صفات الصحيح ولا الحسن.\n4. الموضوع: المكذوب على رسول الله ﷺ، وهو شر الأقسام.',
     'الكتب الستة الأصول': 'هي الكتب التي اعتمدها العلماء كأصول للحديث النبوي:\n1. صحيح البخاري (أصح الكتب بعد القرآن).\n2. صحيح مسلم.\n3. سنن أبي داود.\n4. سنن الترمذي.\n5. سنن النسائي.\n6. سنن ابن ماجه.',
     'علوم الحديث (المصطلح)': 'علم يعرف به حال الراوي والمروي من حيث القبول والرد. يشمل دراسة الجرح والتعديل، ومعرفة علل الحديث، ودراية الأسانيد والمتون. يهدف لحماية السنة من الدخيل والخطأ.',
-    'الأربعون النووية': 'مجموعة من الأحاديث النبوية التي جمعها الإمام النووي، وتعتبر من جوامع الكلم، حيث يشتمل كل حديث منها على قاعدة عظيمة من قواعد الدين.',
     'منزلة الصحابة في الرواية': 'الصحابة كلهم عدول بتعديل الله لهم في القرآن، فلا نبحث عن عدالتهم، بل نبحث عمن روى عنهم. حبهم دين وإيمان، وبغضهم كفر وطغيان.',
     'حجية السنة': 'السنة حجة بنفسها في الأحكام والعقائد، والواجب على المسلم التسليم لها كما يسلم للقرآن. قال تعالى: {وَمَا آتَاكُمُ الرَّسُولُ فَخُذُوهُ وَمَا نَهَاكُمْ عَنْهُ فَانتَهُوا}.',
   },
@@ -575,7 +554,17 @@ export default function App() {
     microphone: false,
     notifications: false
   });
-  const [activeSection, setActiveSection] = useState('home');
+  const [currentFarmIndex, setCurrentFarmIndex] = useState<number>(() => {
+    const saved = localStorage.getItem('hasanat_current_farm_index');
+    return saved ? parseInt(saved) : 0;
+  });
+  const [viewingFarmIndex, setViewingFarmIndex] = useState<number>(() => {
+    const saved = localStorage.getItem('hasanat_current_farm_index');
+    return saved ? parseInt(saved) : 0;
+  });
+  const [activeSection, setActiveSection] = useState<Section>('home');
+  const [pageTexts, setPageTexts] = useState<Record<number, string>>({});
+  const [loadingPage, setLoadingPage] = useState<number | null>(null);
 
   const requestAllPermissions = async () => {
     // Microphone
@@ -726,6 +715,62 @@ export default function App() {
     "لا إله إلا الله",
     "الحمد لله"
   ];
+
+  const fetchPageText = async (pageNumber: number) => {
+    if (pageTexts[pageNumber]) return;
+    setLoadingPage(pageNumber);
+    try {
+      const res = await fetch(`https://api.alquran.cloud/v1/page/${pageNumber}/quran-uthmani`);
+      const data = await res.json();
+      if (data.data && data.data.ayahs) {
+        const text = data.data.ayahs.map((a: any) => a.text + ` (${a.numberInSurah})`).join(' ');
+        setPageTexts(prev => ({ ...prev, [pageNumber]: text }));
+      }
+    } catch (e) {
+      console.error("Error fetching page text", e);
+    } finally {
+      setLoadingPage(null);
+    }
+  };
+
+  useEffect(() => {
+    if (activeSection === 'quran-reader') {
+      fetchPageText(currentPage);
+    }
+  }, [currentPage, activeSection]);
+
+  useEffect(() => {
+    const dhikrsList = [
+      "سبحان الله وبحمده",
+      "سبحان الله العظيم",
+      "لا إله إلا الله",
+      "الحمد لله",
+      "الله أكبر",
+      "لا حول ولا قوة إلا بالله",
+      "أستغفر الله وأتوب إليه",
+      "اللهم صل وسلم على نبينا محمد"
+    ];
+
+    const showNotification = () => {
+      if (Notification.permission === 'granted') {
+        const randomDhikr = dhikrsList[Math.floor(Math.random() * dhikrsList.length)];
+        new Notification("ذكر الله", {
+          body: randomDhikr,
+          icon: "/icon-192x192.png"
+        });
+      }
+    };
+
+    const interval = setInterval(showNotification, 30 * 60 * 1000);
+    
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    } else if (Notification.permission === 'granted') {
+      showNotification();
+    }
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     // Apply dark mode
@@ -1050,8 +1095,8 @@ export default function App() {
     { id: 2, name: "الحمد لله", emoji: "🌳" },
     { id: 3, name: "الله أكبر", emoji: "🌲" },
     { id: 4, name: "لا إله إلا الله", emoji: "🌿" },
-    { id: 5, name: "أستغفر الله", emoji: "🌸" },
-    { id: 6, name: "لا حول ولا قوة إلا بالله", emoji: "🍀" },
+    { id: 5, name: "سبحان الله وبحمده", emoji: "🌴" },
+    { id: 6, name: "سبحان الله العظيم", emoji: "🌴" },
   ];
 
   const plantTree = (idOrName: number | string, emoji?: string) => {
@@ -1064,14 +1109,43 @@ export default function App() {
     
     if (!zone) return;
 
-    const zoneTreesCount = trees.filter(t => t.zoneId === zone.id).length;
-    if (zoneTreesCount >= 200) return;
+    // Only allow planting in the current active farm
+    if (viewingFarmIndex !== currentFarmIndex) {
+      setViewingFarmIndex(currentFarmIndex);
+      return;
+    }
+
+    const zoneTreesCount = trees.filter(t => t.zoneId === zone.id && (t as any).farmId === currentFarmIndex).length;
+    
+    if (zoneTreesCount >= 100) {
+      // Check if all zones in current farm are full
+      const allZonesFull = farmZones.every(z => 
+        trees.filter(t => t.zoneId === z.id && (t as any).farmId === currentFarmIndex).length >= 100
+      );
+
+      if (allZonesFull) {
+        if (currentFarmIndex < 9) {
+          const nextFarm = currentFarmIndex + 1;
+          setCurrentFarmIndex(nextFarm);
+          setViewingFarmIndex(nextFarm);
+          localStorage.setItem('hasanat_current_farm_index', nextFarm.toString());
+          setToast({ message: `مبروك! انتقلت إلى المزرعة رقم ${nextFarm + 1}`, type: 'success' });
+        } else {
+          setToast({ message: 'لقد ملأت جميع المزارع العشرة! ماشاء الله', type: 'info' });
+        }
+        return;
+      } else {
+        setToast({ message: 'هذا الحقل ممتلئ، ازرع في حقل آخر', type: 'info' });
+        return;
+      }
+    }
 
     const newTree = {
       id: Date.now() + Math.random(),
       pos: [0, 0] as [number, number],
       zoneId: zone.id,
-      emoji: emoji || zone.emoji
+      emoji: emoji || zone.emoji,
+      farmId: currentFarmIndex
     };
 
     setTrees(prev => [...prev, newTree]);
@@ -1928,13 +2002,25 @@ export default function App() {
                         dir="rtl"
                       >
                         {Array.from({ length: 604 }).map((_, i) => (
-                          <SwiperSlide key={i} className="flex items-center justify-center bg-[#fdfcf0]">
-                            <img 
-                              src={`https://www.searchtruth.com/quran/images2/page-${i + 1}.png`} 
-                              alt={`Page ${i + 1}`}
-                              className="w-full h-full object-contain"
-                              referrerPolicy="no-referrer"
-                            />
+                          <SwiperSlide key={i} className="flex items-center justify-center bg-[#fdfcf0] overflow-y-auto">
+                            <div className="max-w-2xl w-full p-8 pt-24 pb-24 text-center">
+                               {pageTexts[i + 1] ? (
+                                 <p className="text-3xl leading-[2.8] quran-text text-slate-900 text-justify" dir="rtl">
+                                   {pageTexts[i + 1]}
+                                 </p>
+                               ) : (
+                                 <div className="flex flex-col items-center gap-4">
+                                   <motion.div 
+                                     animate={{ rotate: 360 }}
+                                     transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                     className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full"
+                                   />
+                                   <p className="text-xl quran-text text-slate-500">
+                                     جاري تحميل نص الصفحة {i + 1}...
+                                   </p>
+                                 </div>
+                               )}
+                            </div>
                           </SwiperSlide>
                         ))}
                       </Swiper>
@@ -2018,26 +2104,47 @@ export default function App() {
               className="fixed inset-0 z-[100] flex flex-col bg-gradient-to-b from-[#87CEEB] via-[#a8e6cf] to-[#2ecc71] overflow-hidden"
             >
               {/* Stats Header */}
-              <div className="h-20 bg-black/30 backdrop-blur-md flex items-center justify-center text-white font-bold z-20">
-                غابتك الإيمانية: <span className="mr-2 text-emerald-400">{trees.length}</span> شجرة
-                <button 
-                  onClick={() => confirm('هل تريد مسح المزرعة؟') && setTrees([])}
-                  className="absolute right-6 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
-                >
-                  <RotateCcw size={16} />
-                </button>
+              <div className="h-20 bg-black/30 backdrop-blur-md flex items-center justify-between px-6 text-white font-bold z-20">
                 <button 
                   onClick={() => setActiveSection('home')}
-                  className="absolute left-6 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
                 >
                   <ChevronLeft className="rotate-180" size={16} />
                 </button>
+                
+                <div className="flex flex-col items-center">
+                  <div className="text-xs opacity-70">المزرعة {viewingFarmIndex + 1}</div>
+                  <div className="text-sm">
+                    غابتك: <span className="text-emerald-400">{trees.filter(t => (t as any).farmId === viewingFarmIndex).length}</span> شجرة
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => {
+                      const prev = Math.max(0, viewingFarmIndex - 1);
+                      setViewingFarmIndex(prev);
+                    }}
+                    className={`p-2 rounded-full transition-colors ${viewingFarmIndex > 0 ? 'bg-white/20' : 'bg-white/5 opacity-50'}`}
+                  >
+                    <ChevronLeft className="rotate-180" size={14} />
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const next = Math.min(currentFarmIndex, viewingFarmIndex + 1);
+                      setViewingFarmIndex(next);
+                    }}
+                    className={`p-2 rounded-full transition-colors ${viewingFarmIndex < currentFarmIndex ? 'bg-white/20' : 'bg-white/5 opacity-50'}`}
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                </div>
               </div>
 
               {/* Plots Container */}
               <div className="flex-1 grid grid-cols-2 gap-4 p-4 content-center">
                 {farmZones.map((zone) => {
-                  const zoneTrees = trees.filter(t => t.zoneId === zone.id);
+                  const zoneTrees = trees.filter(t => t.zoneId === zone.id && (t as any).farmId === viewingFarmIndex);
                   return (
                     <div 
                       key={zone.id}
@@ -2056,7 +2163,7 @@ export default function App() {
                         </span>
                       ))}
                       <div className="absolute bottom-1 bg-black/50 text-white text-[0.7rem] px-2 py-0.5 rounded-xl z-20">
-                        {zone.name}
+                        {zone.name} ({zoneTrees.length}/100)
                       </div>
                     </div>
                   );
@@ -2557,7 +2664,7 @@ export default function App() {
         </button>
         <button
           onClick={() => setActiveSection('farm')}
-          className={`flex flex-col items-center p-2 rounded-2xl transition-all ${activeSection === 'farm' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
+          className={`flex flex-col items-center p-2 rounded-2xl transition-all ${(activeSection as any) === 'farm' ? 'bg-islamic-green dark:bg-emerald-600 text-white shadow-lg' : 'text-slate-400 dark:text-slate-500'}`}
         >
           <Sprout size={20} />
           <span className="text-[9px] mt-1 font-bold">المزرعة</span>

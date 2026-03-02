@@ -11,18 +11,19 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js').then(registration => {
-            console.log('SW registered: ', registration);
-          }).catch(registrationError => {
-            console.log('SW registration failed: ', registrationError);
-          });
-        });
-      }
+      // Error handling for debugging on mobile
+      window.onerror = function(message, source, lineno, colno, error) {
+        alert("Error: " + message + "\nSource: " + source + "\nLine: " + lineno + "\nColumn: " + colno);
+        return false;
+      };
+      
+      // Catch unhandled promise rejections
+      window.onunhandledrejection = function(event) {
+        alert("Unhandled Rejection: " + event.reason);
+      };
     </script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
 

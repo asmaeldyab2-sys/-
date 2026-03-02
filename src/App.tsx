@@ -638,17 +638,13 @@ export default function App() {
   const [selectedAdhkarCategory, setSelectedAdhkarCategory] = useState<string | null>(null);
   const [selectedFatwaCategory, setSelectedFatwaCategory] = useState<string | null>(null);
   const [openFatwaIndex, setOpenFatwaIndex] = useState<number | null>(null);
-  const [ahlAllahTab, setAhlAllahTab] = useState<'methods' | 'exams' | 'recitation'>('methods');
+  const [ahlAllahTab, setAhlAllahTab] = useState<'methods' | 'exams'>('methods');
   const [currentExamIndex, setCurrentExamIndex] = useState(0);
   const [examScore, setExamScore] = useState(0);
   const [examQuestionsCount, setExamQuestionsCount] = useState(5);
   const [examSurah, setExamSurah] = useState<Surah | null>(null);
   const [examStatus, setExamStatus] = useState<'setup' | 'active' | 'finished'>('setup');
   const [examResults, setExamResults] = useState<{ q: string; user: string; correct: string; isRight: boolean }[]>([]);
-  const [isListening, setIsListening] = useState(false);
-  const [recognizedText, setRecognizedText] = useState('');
-  const [recitationWords, setRecitationWords] = useState<string[]>([]);
-  const [targetRecitationText, setTargetRecitationText] = useState('الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ');
   const [notificationDhikr, setNotificationDhikr] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
 
@@ -675,8 +671,6 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [dailyProgress, setDailyProgress] = useState(0);
   const [nawawiProgress, setNawawiProgress] = useState<Record<number, boolean>>({});
-  const [wrongWords, setWrongWords] = useState<string[]>([]);
-  const [showRecitationTarget, setShowRecitationTarget] = useState(true);
 
   const shareOnWhatsApp = (title: string, content: string) => {
     const text = `*${title}*\n\n${content}\n\nتمت المشاركة من تطبيق حسنات`;
@@ -1430,13 +1424,6 @@ export default function App() {
                   <Trophy size={16} />
                   امتحانات
                 </button>
-                <button 
-                  onClick={() => setAhlAllahTab('recitation')}
-                  className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${ahlAllahTab === 'recitation' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400'}`}
-                >
-                  <Mic size={16} />
-                  تسميع ذكي
-                </button>
               </div>
 
               {ahlAllahTab === 'methods' && (
@@ -1624,125 +1611,6 @@ export default function App() {
                       </button>
                     </div>
                   )}
-                </div>
-              )}
-
-              {ahlAllahTab === 'recitation' && (
-                <div className="space-y-6">
-                  <div className="bg-slate-800/40 border border-white/5 p-8 rounded-[40px] text-center min-h-[250px] flex flex-col justify-center relative">
-                    {!isListening && recitationWords.length === 0 && (
-                      <p className="text-xs text-slate-500 mb-4">اضغط على المايك وابدأ التسميع، ستظهر الكلمات عند نطقها بشكل صحيح</p>
-                    )}
-                    
-                    <div className="flex flex-wrap justify-center gap-2 mb-8">
-                      {targetRecitationText.split(' ').map((word, idx) => {
-                        const cleanWord = word.replace(/[^\u0621-\u064A]/g, '');
-                        const isCorrect = recitationWords.includes(cleanWord);
-                        const isWrong = wrongWords.includes(cleanWord);
-                        
-                        return (
-                          <motion.span 
-                            key={idx}
-                            initial={{ opacity: 1 }}
-                            animate={{ 
-                              opacity: isListening ? (isCorrect ? 1 : 0) : 1,
-                              color: isCorrect ? '#34d399' : (isWrong ? '#f87171' : '#94a3b8'),
-                              scale: isCorrect ? 1.1 : 1
-                            }}
-                            className="text-2xl font-bold quran-text transition-colors"
-                          >
-                            {word}
-                          </motion.span>
-                        );
-                      })}
-                    </div>
-                    
-                    <div className="flex justify-center mb-8">
-                      <button 
-                        onClick={() => {
-                          if (!isListening) {
-                            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-                            if (SpeechRecognition) {
-                              const recognition = new SpeechRecognition();
-                              recognition.lang = 'ar-SA';
-                              recognition.continuous = true;
-                              recognition.interimResults = true;
-                              
-                              recognition.onstart = () => {
-                                setIsListening(true);
-                                setRecitationWords([]);
-                                setWrongWords([]);
-                                setRecognizedText('');
-                              };
-                              
-                              recognition.onresult = (event: any) => {
-                                let interimTranscript = '';
-                                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                                  const transcript = event.results[i][0].transcript.trim().toLowerCase();
-                                  if (event.results[i].isFinal) {
-                                    const spokenWords = transcript.split(' ');
-                                    const lastSpoken = normalizeArabic(spokenWords[spokenWords.length - 1]);
-                                    
-                                    const targetWords = targetRecitationText.split(' ').map(w => normalizeArabic(w));
-                                    const nextWordIndex = recitationWords.length;
-                                    const nextTargetWord = targetWords[nextWordIndex];
-
-                                    if (lastSpoken === nextTargetWord || (nextTargetWord && lastSpoken.includes(nextTargetWord))) {
-                                      setRecitationWords(prev => [...prev, targetRecitationText.split(' ')[nextWordIndex]]);
-                                      setWrongWords([]);
-                                    } else {
-                                      setWrongWords(prev => [...prev, lastSpoken]);
-                                      if (window.navigator.vibrate) window.navigator.vibrate(200);
-                                    }
-                                  } else {
-                                    interimTranscript += transcript;
-                                  }
-                                }
-                                setRecognizedText(interimTranscript);
-                              };
-                              
-                              recognition.onend = () => setIsListening(false);
-                              recognition.start();
-                              (window as any).currentRecognition = recognition;
-                            } else {
-                              alert('متصفحك لا يدعم خاصية التعرف على الصوت');
-                            }
-                          } else {
-                            if ((window as any).currentRecognition) (window as any).currentRecognition.stop();
-                            setIsListening(false);
-                          }
-                        }}
-                        className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${isListening ? 'bg-red-500 animate-pulse' : 'bg-emerald-500 shadow-lg shadow-emerald-500/20'}`}
-                      >
-                        <Mic size={32} className="text-white" />
-                      </button>
-                    </div>
-
-                    {isListening && (
-                      <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
-                        <p className="text-[10px] text-emerald-500 mb-2">جاري الاستماع...</p>
-                        <p className="text-sm font-bold text-white italic">{recognizedText || '...'}</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => {
-                        const randomSurah = surahs[Math.floor(Math.random() * surahs.length)];
-                        fetch(`https://api.alquran.cloud/v1/surah/${randomSurah.number}`)
-                          .then(r => r.json())
-                          .then(d => {
-                            const v = d.data.ayahs[Math.floor(Math.random() * d.data.ayahs.length)];
-                            setTargetRecitationText(v.text);
-                            setRecitationWords([]);
-                          });
-                      }}
-                      className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold"
-                    >
-                      تغيير الآية
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-slate-500 text-center italic">تعتمد هذه الخاصية على تقنية Web Speech API وتتطلب متصفحاً حديثاً ونطقاً واضحاً</p>
                 </div>
               )}
             </motion.div>

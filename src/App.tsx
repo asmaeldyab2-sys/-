@@ -639,6 +639,10 @@ export default function App() {
   const [selectedFatwaCategory, setSelectedFatwaCategory] = useState<string | null>(null);
   const [openFatwaIndex, setOpenFatwaIndex] = useState<number | null>(null);
   const [ahlAllahTab, setAhlAllahTab] = useState<'methods' | 'exams'>('methods');
+  const [examCategory, setExamCategory] = useState<'quran' | 'knowledge' | 'hadith' | 'fatwas'>('quran');
+  const [examDifficulty, setExamDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [examTimer, setExamTimer] = useState(0); // 0 means no timer
+  const [timeLeft, setTimeLeft] = useState(0);
   const [currentExamIndex, setCurrentExamIndex] = useState(0);
   const [examScore, setExamScore] = useState(0);
   const [examQuestionsCount, setExamQuestionsCount] = useState(5);
@@ -1054,6 +1058,129 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let timer: any;
+    if (examStatus === 'active' && examTimer > 0 && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            // Auto-advance or finish if time runs out
+            if (currentExamIndex + 1 < examQuestionsCount) {
+              setCurrentExamIndex(c => c + 1);
+              return examTimer;
+            } else {
+              setExamStatus('finished');
+              return 0;
+            }
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [examStatus, timeLeft, examTimer, currentExamIndex, examQuestionsCount]);
+
+  const generateQuestions = async () => {
+    setIsLoadingQuran(true);
+    try {
+      let questions: any[] = [];
+      
+      if (examCategory === 'quran' && examSurah) {
+        const res = await fetch(`https://api.alquran.cloud/v1/surah/${examSurah.number}`);
+        const data = await res.json();
+        const verses = data.data.ayahs;
+        
+        for (let i = 0; i < examQuestionsCount; i++) {
+          const randomVerse = verses[Math.floor(Math.random() * verses.length)];
+          const words = randomVerse.text.split(' ');
+          if (words.length < 4) { i--; continue; } 
+          
+          const missingWordIndex = Math.floor(Math.random() * words.length);
+          const missingWord = words[missingWordIndex];
+          const questionText = words.map((w: string, idx: number) => idx === missingWordIndex ? '...' : w).join(' ');
+          
+          const optionsCount = examDifficulty === 'easy' ? 2 : (examDifficulty === 'medium' ? 3 : 4);
+          const distractors = [];
+          while (distractors.length < optionsCount - 1) {
+            const v = verses[Math.floor(Math.random() * verses.length)];
+            const w = v.text.split(' ')[Math.floor(Math.random() * v.text.split(' ').length)];
+            if (w !== missingWord && !distractors.includes(w)) distractors.push(w);
+          }
+          
+          questions.push({
+            question: `{ ${questionText} }`,
+            options: [missingWord, ...distractors].sort(() => Math.random() - 0.5),
+            answer: missingWord
+          });
+        }
+      } else if (examCategory === 'knowledge') {
+        const categories = Object.keys(knowledgeData);
+        for (let i = 0; i < examQuestionsCount; i++) {
+          const cat = categories[Math.floor(Math.random() * categories.length)];
+          const topics = Object.keys(knowledgeData[cat]);
+          const topic = topics[Math.floor(Math.random() * topics.length)];
+          
+          const optionsCount = examDifficulty === 'easy' ? 2 : (examDifficulty === 'medium' ? 3 : 4);
+          const distractors = [];
+          while (distractors.length < optionsCount - 1) {
+            const randomCat = categories[Math.floor(Math.random() * categories.length)];
+            const randomTopics = Object.keys(knowledgeData[randomCat]);
+            const randomTopic = randomTopics[Math.floor(Math.random() * randomTopics.length)];
+            if (randomTopic !== topic && !distractors.includes(randomTopic)) distractors.push(randomTopic);
+          }
+
+          questions.push({
+            question: `ما هو الموضوع الذي يتحدث عن: "${topic}"؟`,
+            options: [topic, ...distractors].sort(() => Math.random() - 0.5),
+            answer: topic
+          });
+        }
+      } else if (examCategory === 'fatwas') {
+        const categories = Object.keys(fatwaData);
+        for (let i = 0; i < examQuestionsCount; i++) {
+          const cat = categories[Math.floor(Math.random() * categories.length)];
+          const items = fatwaData[cat];
+          const item = items[Math.floor(Math.random() * items.length)];
+          
+          const optionsCount = examDifficulty === 'easy' ? 2 : (examDifficulty === 'medium' ? 3 : 4);
+          const distractors = [];
+          while (distractors.length < optionsCount - 1) {
+            const randomCat = categories[Math.floor(Math.random() * categories.length)];
+            const randomItem = fatwaData[randomCat][Math.floor(Math.random() * fatwaData[randomCat].length)];
+            if (randomItem.a !== item.a && !distractors.includes(randomItem.a)) distractors.push(randomItem.a);
+          }
+
+          questions.push({
+            question: item.q,
+            options: [item.a, ...distractors].sort(() => Math.random() - 0.5),
+            answer: item.a
+          });
+        }
+      } else if (examCategory === 'hadith') {
+        const items = ahlAllahData.exams;
+        for (let i = 0; i < examQuestionsCount; i++) {
+          const item = items[Math.floor(Math.random() * items.length)];
+          questions.push({
+            question: item.question,
+            options: item.options,
+            answer: item.answer
+          });
+        }
+      }
+
+      (window as any).generatedQuestions = questions;
+      setExamStatus('active');
+      setCurrentExamIndex(0);
+      setExamScore(0);
+      setExamResults([]);
+      if (examTimer > 0) setTimeLeft(examTimer);
+    } catch (e) {
+      alert('حدث خطأ في تحميل الأسئلة');
+    } finally {
+      setIsLoadingQuran(false);
+    }
+  };
+
+  useEffect(() => {
     try {
       localStorage.setItem('hasanat_daily_progress', dailyProgress.toString());
     } catch (e) { console.warn('localStorage error', e); }
@@ -1447,17 +1574,60 @@ export default function App() {
                       <h3 className="text-lg font-bold text-white text-center">إعداد الاختبار</h3>
                       
                       <div className="space-y-2">
-                        <label className="text-xs text-slate-500 mr-2">اختر السورة:</label>
-                        <select 
-                          onChange={(e) => {
-                            const s = surahs.find(x => x.number === parseInt(e.target.value));
-                            setExamSurah(s || null);
-                          }}
-                          className="w-full bg-slate-900 border border-white/5 rounded-2xl p-4 text-slate-200 focus:ring-2 focus:ring-emerald-500"
-                        >
-                          <option value="">اختر سورة...</option>
-                          {surahs.map(s => <option key={s.number} value={s.number}>{s.name}</option>)}
-                        </select>
+                        <label className="text-xs text-slate-500 mr-2">نوع الاختبار:</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { id: 'quran', name: 'قرآن كريم', icon: <Book size={14} /> },
+                            { id: 'knowledge', name: 'علوم شرعية', icon: <GraduationCap size={14} /> },
+                            { id: 'fatwas', name: 'فتاوى وأحكام', icon: <HelpCircle size={14} /> },
+                            { id: 'hadith', name: 'أحاديث نبوية', icon: <Users size={14} /> }
+                          ].map(cat => (
+                            <button 
+                              key={cat.id}
+                              onClick={() => setExamCategory(cat.id as any)}
+                              className={`py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${examCategory === cat.id ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500'}`}
+                            >
+                              {cat.icon}
+                              <span className="text-[10px]">{cat.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {examCategory === 'quran' && (
+                        <div className="space-y-2">
+                          <label className="text-xs text-slate-500 mr-2">اختر السورة:</label>
+                          <select 
+                            value={examSurah?.number || ''} 
+                            onChange={(e) => {
+                              const s = surahs.find(x => x.number === parseInt(e.target.value));
+                              setExamSurah(s || null);
+                            }}
+                            className="w-full bg-slate-900 border border-white/5 rounded-2xl p-4 text-slate-200 focus:ring-2 focus:ring-emerald-500"
+                          >
+                            <option value="">اختر سورة...</option>
+                            {surahs.map(s => <option key={s.number} value={s.number}>{s.name}</option>)}
+                          </select>
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <label className="text-xs text-slate-500 mr-2">الصعوبة:</label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { id: 'easy', name: 'سهل' },
+                            { id: 'medium', name: 'متوسط' },
+                            { id: 'hard', name: 'صعب' }
+                          ].map(d => (
+                            <button 
+                              key={d.id}
+                              onClick={() => setExamDifficulty(d.id as any)}
+                              className={`py-3 rounded-xl font-bold transition-all ${examDifficulty === d.id ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500'}`}
+                            >
+                              <span className="text-[10px]">{d.name}</span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="space-y-2">
@@ -1475,52 +1645,24 @@ export default function App() {
                         </div>
                       </div>
 
+                      <div className="space-y-2">
+                        <label className="text-xs text-slate-500 mr-2">مؤقت السؤال (ثواني):</label>
+                        <div className="grid grid-cols-4 gap-2">
+                          {[0, 10, 20, 30].map(t => (
+                            <button 
+                              key={t}
+                              onClick={() => setExamTimer(t)}
+                              className={`py-3 rounded-xl font-bold transition-all ${examTimer === t ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-slate-500'}`}
+                            >
+                              <span className="text-[10px]">{t === 0 ? 'بدون' : t}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       <button 
-                        disabled={!examSurah}
-                        onClick={async () => {
-                          if (!examSurah) return;
-                          setIsLoadingQuran(true);
-                          try {
-                            const res = await fetch(`https://api.alquran.cloud/v1/surah/${examSurah.number}`);
-                            const data = await res.json();
-                            const verses = data.data.ayahs;
-                            
-                            // Generate random questions from verses
-                            const questions = [];
-                            for (let i = 0; i < examQuestionsCount; i++) {
-                              const randomVerse = verses[Math.floor(Math.random() * verses.length)];
-                              const words = randomVerse.text.split(' ');
-                              if (words.length < 4) { i--; continue; } 
-                              
-                              const missingWordIndex = Math.floor(Math.random() * words.length);
-                              const missingWord = words[missingWordIndex];
-                              const questionText = words.map((w: string, idx: number) => idx === missingWordIndex ? '...' : w).join(' ');
-                              
-                              const distractors = [];
-                              while (distractors.length < 2) {
-                                const v = verses[Math.floor(Math.random() * verses.length)];
-                                const w = v.text.split(' ')[Math.floor(Math.random() * v.text.split(' ').length)];
-                                if (w !== missingWord && !distractors.includes(w)) distractors.push(w);
-                              }
-                              
-                              questions.push({
-                                question: `{ ${questionText} }`,
-                                options: [missingWord, ...distractors].sort(() => Math.random() - 0.5),
-                                answer: missingWord
-                              });
-                            }
-                            
-                            (window as any).generatedQuestions = questions;
-                            setExamStatus('active');
-                            setCurrentExamIndex(0);
-                            setExamScore(0);
-                            setExamResults([]);
-                          } catch (e) {
-                            alert('حدث خطأ في تحميل الأسئلة');
-                          } finally {
-                            setIsLoadingQuran(false);
-                          }
-                        }}
+                        disabled={examCategory === 'quran' && !examSurah}
+                        onClick={generateQuestions}
                         className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                       >
                         ابدأ الاختبار الآن
@@ -1531,7 +1673,21 @@ export default function App() {
                   {examStatus === 'active' && (window as any).generatedQuestions && (
                     <div className="space-y-6">
                       <div className="flex justify-between items-center px-2">
-                        <span className="text-xs text-slate-500">السؤال {currentExamIndex + 1} من {examQuestionsCount}</span>
+                        <div className="flex flex-col">
+                          <span className="text-xs text-slate-500">السؤال {currentExamIndex + 1} من {examQuestionsCount}</span>
+                          {examTimer > 0 && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <div className="w-24 h-1 bg-slate-800 rounded-full overflow-hidden">
+                                <motion.div 
+                                  initial={{ width: '100%' }}
+                                  animate={{ width: `${(timeLeft / examTimer) * 100}%` }}
+                                  className={`h-full ${timeLeft < 5 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                                />
+                              </div>
+                              <span className={`text-[10px] font-bold ${timeLeft < 5 ? 'text-red-500 animate-pulse' : 'text-slate-400'}`}>{timeLeft}ث</span>
+                            </div>
+                          )}
+                        </div>
                         <span className="text-xs font-bold text-emerald-500">النتيجة: {examScore}</span>
                       </div>
                       
@@ -1559,6 +1715,7 @@ export default function App() {
 
                               if (currentExamIndex + 1 < examQuestionsCount) {
                                 setCurrentExamIndex(prev => prev + 1);
+                                if (examTimer > 0) setTimeLeft(examTimer);
                               } else {
                                 setExamStatus('finished');
                                 setDailyProgress(prev => Math.min(prev + 10, 100));

@@ -580,8 +580,8 @@ export default function App() {
 
   const requestAllPermissions = async () => {
     // Microphone
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         // First check if devices exist
         const devices = await navigator.mediaDevices.enumerateDevices();
         const hasMic = devices.some(device => device.kind === 'audioinput');
@@ -590,28 +590,32 @@ export default function App() {
           await navigator.mediaDevices.getUserMedia({ audio: true });
           setPermissionsGranted(prev => ({ ...prev, microphone: true }));
         }
-      } catch (e) {
-        console.warn('Microphone permission denied or device not found', e);
       }
+    } catch (e) {
+      console.warn('Microphone permission denied or device not found', e);
     }
     
     // Location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        () => setPermissionsGranted(prev => ({ ...prev, location: true })),
-        (err) => console.warn('Location permission denied', err),
-        { timeout: 10000 }
-      );
+    try {
+      if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          () => setPermissionsGranted(prev => ({ ...prev, location: true })),
+          (err) => console.warn('Location permission denied', err),
+          { timeout: 10000 }
+        );
+      }
+    } catch (e) {
+      console.warn('Geolocation access failed', e);
     }
 
     // Notifications
-    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-      try {
+    try {
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
         const permission = await Notification.requestPermission();
         setPermissionsGranted(prev => ({ ...prev, notifications: permission === 'granted' }));
-      } catch (e) {
-        console.warn('Notification permission request failed', e);
       }
+    } catch (e) {
+      console.warn('Notification permission request failed', e);
     }
   };
   const [selectedKnowledgeCategory, setSelectedKnowledgeCategory] = useState<string | null>(null);
@@ -767,21 +771,31 @@ export default function App() {
     ];
 
     const showNotification = () => {
-      if (Notification.permission === 'granted') {
-        const randomDhikr = dhikrsList[Math.floor(Math.random() * dhikrsList.length)];
-        new Notification("ذكر الله", {
-          body: randomDhikr,
-          icon: "/icon-192x192.png"
-        });
+      try {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          const randomDhikr = dhikrsList[Math.floor(Math.random() * dhikrsList.length)];
+          new Notification("ذكر الله", {
+            body: randomDhikr,
+            icon: "/icon-192x192.png"
+          });
+        }
+      } catch (e) {
+        console.warn('Notification failed', e);
       }
     };
 
     const interval = setInterval(showNotification, 30 * 60 * 1000);
     
-    if (Notification.permission === 'default') {
-      Notification.requestPermission();
-    } else if (Notification.permission === 'granted') {
-      showNotification();
+    try {
+      if (typeof Notification !== 'undefined') {
+        if (Notification.permission === 'default') {
+          Notification.requestPermission();
+        } else if (Notification.permission === 'granted') {
+          showNotification();
+        }
+      }
+    } catch (e) {
+      console.warn('Notification permission check failed', e);
     }
 
     return () => clearInterval(interval);
@@ -797,10 +811,12 @@ export default function App() {
   }, [isDarkMode]);
 
   useEffect(() => {
-    localStorage.setItem('hasanat_last_quran_page', currentPage.toString());
-    if (swiperRef.current && currentPage) {
-      swiperRef.current.slideTo(currentPage - 1);
-    }
+    try {
+      localStorage.setItem('hasanat_last_quran_page', currentPage.toString());
+      if (swiperRef.current && currentPage) {
+        swiperRef.current.slideTo(currentPage - 1);
+      }
+    } catch (e) { console.warn('localStorage error', e); }
   }, [currentPage]);
 
   useEffect(() => {
@@ -986,7 +1002,9 @@ export default function App() {
       audioRef.current.currentTime = 0;
     }
     setLastRead({ surah: surah.name, number: surah.number });
-    localStorage.setItem('hasanat_last_read', JSON.stringify({ surah: surah.name, number: surah.number }));
+    try {
+      localStorage.setItem('hasanat_last_read', JSON.stringify({ surah: surah.name, number: surah.number }));
+    } catch (e) { console.warn('localStorage error', e); }
   };
 
   useEffect(() => {
@@ -1042,23 +1060,33 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('hasanat_daily_progress', dailyProgress.toString());
+    try {
+      localStorage.setItem('hasanat_daily_progress', dailyProgress.toString());
+    } catch (e) { console.warn('localStorage error', e); }
   }, [dailyProgress]);
 
   useEffect(() => {
-    localStorage.setItem('hasanat_nawawi_progress', JSON.stringify(nawawiProgress));
+    try {
+      localStorage.setItem('hasanat_nawawi_progress', JSON.stringify(nawawiProgress));
+    } catch (e) { console.warn('localStorage error', e); }
   }, [nawawiProgress]);
 
   useEffect(() => {
-    localStorage.setItem('hasanat_dhikr_count', dhikrCount.toString());
+    try {
+      localStorage.setItem('hasanat_dhikr_count', dhikrCount.toString());
+    } catch (e) { console.warn('localStorage error', e); }
   }, [dhikrCount]);
 
   useEffect(() => {
-    localStorage.setItem('hasanat_trees_v2', JSON.stringify(trees));
+    try {
+      localStorage.setItem('hasanat_trees_v2', JSON.stringify(trees));
+    } catch (e) { console.warn('localStorage error', e); }
   }, [trees]);
 
   useEffect(() => {
-    localStorage.setItem('hasanat_misbaha', JSON.stringify(misbahaCounts));
+    try {
+      localStorage.setItem('hasanat_misbaha', JSON.stringify(misbahaCounts));
+    } catch (e) { console.warn('localStorage error', e); }
   }, [misbahaCounts]);
 
   useEffect(() => {
@@ -1088,7 +1116,9 @@ export default function App() {
       const updated = [...filtered, newBookmark];
       
       setBookmarks(updated);
-      localStorage.setItem('hasanat_bookmarks', JSON.stringify(updated));
+      try {
+        localStorage.setItem('hasanat_bookmarks', JSON.stringify(updated));
+      } catch (e) { console.warn('localStorage error', e); }
       setActiveAyahMenu(null);
     }
   };
@@ -1168,7 +1198,9 @@ export default function App() {
           const nextFarm = currentFarmIndex + 1;
           setCurrentFarmIndex(nextFarm);
           setViewingFarmIndex(nextFarm);
-          localStorage.setItem('hasanat_current_farm_index', nextFarm.toString());
+          try {
+            localStorage.setItem('hasanat_current_farm_index', nextFarm.toString());
+          } catch (e) { console.warn('localStorage error', e); }
           setToast({ message: `مبروك! انتقلت إلى المزرعة رقم ${nextFarm + 1}`, type: 'success' });
         } else {
           setToast({ message: 'لقد ملأت جميع المزارع العشرة! ماشاء الله', type: 'info' });
@@ -1192,7 +1224,7 @@ export default function App() {
     setDhikrCount(prev => prev + 1);
     setDailyProgress(prev => Math.min(prev + 1, 100));
     
-    if (window.navigator.vibrate) window.navigator.vibrate(40);
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(40);
   };
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
@@ -1543,13 +1575,15 @@ export default function App() {
                               } else {
                                 setExamStatus('finished');
                                 setDailyProgress(prev => Math.min(prev + 10, 100));
-                                const history = JSON.parse(localStorage.getItem('hasanat_exam_history') || '[]');
-                                history.push({
-                                  date: new Date().toISOString(),
-                                  surah: examSurah?.name,
-                                  score: Math.round(((isRight ? examScore + 1 : examScore) / examQuestionsCount) * 100)
-                                });
-                                localStorage.setItem('hasanat_exam_history', JSON.stringify(history));
+                                try {
+                                  const history = JSON.parse(localStorage.getItem('hasanat_exam_history') || '[]');
+                                  history.push({
+                                    date: new Date().toISOString(),
+                                    surah: examSurah?.name,
+                                    score: Math.round(((isRight ? examScore + 1 : examScore) / examQuestionsCount) * 100)
+                                  });
+                                  localStorage.setItem('hasanat_exam_history', JSON.stringify(history));
+                                } catch (e) { console.warn('localStorage error', e); }
                               }
                             }}
                             className="w-full py-4 bg-slate-700/50 hover:bg-emerald-500/20 border border-white/5 rounded-2xl font-bold text-slate-200 transition-all active:scale-95"

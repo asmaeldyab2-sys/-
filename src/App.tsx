@@ -2358,15 +2358,26 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex flex-col bg-gradient-to-b from-[#87CEEB] via-[#a8e6cf] to-[#2ecc71] overflow-hidden"
+              className="fixed inset-0 z-[100] flex flex-col bg-[#2ecc71] overflow-hidden"
             >
+              {/* Natural Background Image */}
+              <div className="absolute inset-0 z-0">
+                <img 
+                  src="https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=1920&q=80" 
+                  alt="Nature Background" 
+                  className="w-full h-full object-cover opacity-60"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
+              </div>
+
               {/* Stats Header */}
-              <div className="h-20 bg-black/30 backdrop-blur-md flex items-center justify-between px-6 text-white font-bold z-20">
+              <div className="h-24 bg-black/20 backdrop-blur-xl flex items-center justify-between px-6 text-white font-bold z-20 border-b border-white/10">
                 <button 
                   onClick={() => setActiveSection('home')}
-                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+                  className="p-3 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-colors shadow-lg"
                 >
-                  <ChevronLeft className="rotate-180" size={16} />
+                  <ChevronLeft className="rotate-180" size={20} />
                 </button>
                 
                 <div className="flex flex-col items-center">
@@ -2405,7 +2416,7 @@ export default function App() {
                   return (
                     <div 
                       key={zone.id}
-                      className="relative bg-white/20 border-2 border-white/90 rounded-[30px] h-36 flex flex-wrap justify-center content-center shadow-lg overflow-hidden"
+                      className="relative bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-[40px] h-40 flex flex-wrap justify-center content-center shadow-2xl overflow-hidden transition-all hover:scale-[1.02]"
                     >
                       <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(139,69,19,0.4)_0%,transparent_70%)] z-0" />
                       {zoneTrees.map((tree) => (
@@ -2428,15 +2439,15 @@ export default function App() {
               </div>
 
               {/* Controls Panel */}
-              <div className="bg-[#1a2233]/95 p-4 rounded-t-[30px] grid grid-cols-3 gap-2 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.2)]">
+              <div className="bg-black/40 backdrop-blur-2xl p-6 rounded-t-[40px] grid grid-cols-3 gap-3 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] border-t border-white/10">
                 {farmZones.map((zone) => (
                   <button
                     key={zone.id}
                     onClick={() => plantTree(zone.id, zone.emoji)}
-                    className="bg-white/10 border border-emerald-500 text-white rounded-[15px] py-3 px-1 flex flex-col items-center cursor-pointer active:scale-95 transition-all hover:bg-emerald-500/20"
+                    className="bg-white/5 backdrop-blur-sm border border-white/10 text-white rounded-[20px] py-4 px-2 flex flex-col items-center cursor-pointer active:scale-95 transition-all hover:bg-emerald-500/30 hover:border-emerald-500/50 group"
                   >
-                    <span className="text-xl mb-1">{zone.emoji}</span>
-                    <span className="text-[0.7rem] font-bold whitespace-nowrap">{zone.name}</span>
+                    <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">{zone.emoji}</span>
+                    <span className="text-[0.7rem] font-bold whitespace-nowrap opacity-80 group-hover:opacity-100">{zone.name}</span>
                   </button>
                 ))}
               </div>

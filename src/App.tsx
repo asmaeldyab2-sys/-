@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Swiper, SwiperSlide } from 'swiper/react';
+import { Virtual } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
-import { GoogleGenAI, Type } from "@google/genai";
+import 'swiper/css/virtual';
+import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { 
   Home, 
   Sprout,
@@ -136,7 +138,7 @@ interface Tafsir {
 }
 
 // --- Background Decorations ---
-function BackgroundDecorations({ isDarkMode }: { isDarkMode: boolean }) {
+const BackgroundDecorations = React.memo(function BackgroundDecorations({ isDarkMode }: { isDarkMode: boolean }) {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       <AnimatePresence mode="wait">
@@ -208,7 +210,18 @@ function BackgroundDecorations({ isDarkMode }: { isDarkMode: boolean }) {
       </AnimatePresence>
     </div>
   );
-}
+});
+
+const MemoizedTree = React.memo(function MemoizedTree({ emoji, fontSize }: { emoji: string; fontSize: string }) {
+  return (
+    <span 
+      className="tree-item z-10 animate-[pop_0.3s_ease] -m-[2px]"
+      style={{ fontSize }}
+    >
+      {emoji}
+    </span>
+  );
+});
 
 // --- Main App Component ---
 const knowledgeData: Record<string, Record<string, string>> = {
@@ -901,10 +914,11 @@ export default function App() {
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.1-pro-preview",
         contents: prompt,
         config: {
-          systemInstruction: "أنت مساعد إسلامي ذكي في تطبيق 'حسنات'. هدفك هو الإجابة على أسئلة المستخدمين حول الدين الإسلامي، القرآن، السيرة، والفقه بأسلوب لطيف، دقيق، ومبسط. استخدم اللغة العربية الفصحى الجميلة. إذا سألك المستخدم عن شيء خارج الدين، حاول ربطه بالقيم الأخلاقية الإسلامية بلطف.",
+          systemInstruction: "أنت مساعد إسلامي ذكي وفائق السرعة في تطبيق 'حسنات'. هدفك هو الإجابة على أسئلة المستخدمين حول الدين الإسلامي، القرآن، السيرة، والفقه بأسلوب لطيف، دقيق، ومبسط جداً. استخدم اللغة العربية الفصحى الجميلة. كن موجزاً وواضحاً لتسريع الاستجابة. إذا سألك المستخدم عن شيء خارج الدين، حاول ربطه بالقيم الأخلاقية الإسلامية بلطف.",
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
         },
       });
       
@@ -1538,7 +1552,7 @@ export default function App() {
     { id: 6, name: "سبحان الله العظيم", emoji: "🌴" },
   ];
 
-  const plantTree = (idOrName: number | string, emoji?: string) => {
+  const plantTree = React.useCallback((idOrName: number | string, emoji?: string) => {
     let zone;
     if (typeof idOrName === 'number') {
       zone = farmZones.find(z => z.id === idOrName);
@@ -1594,7 +1608,20 @@ export default function App() {
     setDailyProgress(prev => Math.min(prev + 1, 100));
     
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(40);
-  };
+  }, [trees, viewingFarmIndex, currentFarmIndex, farmZones]);
+
+  const groupedTrees = React.useMemo(() => {
+    const groups: Record<number, any[]> = {};
+    trees.forEach(t => {
+      const farmId = (t as any).farmId || 0;
+      if (farmId === viewingFarmIndex) {
+        if (!groups[t.zoneId]) groups[t.zoneId] = [];
+        groups[t.zoneId].push(t);
+      }
+    });
+    return groups;
+  }, [trees, viewingFarmIndex]);
+
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
@@ -2738,6 +2765,8 @@ export default function App() {
                       </div>
 
                       <Swiper
+                        modules={[Virtual]}
+                        virtual
                         onSwiper={(swiper) => swiperRef.current = swiper}
                         initialSlide={currentPage - 1}
                         onSlideChange={(swiper) => setCurrentPage(swiper.activeIndex + 1)}
@@ -2745,7 +2774,7 @@ export default function App() {
                         dir="rtl"
                       >
                         {Array.from({ length: 604 }).map((_, i) => (
-                          <SwiperSlide key={i} className="flex items-center justify-center bg-[#fdfcf0] overflow-y-auto">
+                          <SwiperSlide key={i} virtualIndex={i} className="flex items-center justify-center bg-[#fdfcf0] overflow-y-auto">
                             <div className="max-w-2xl w-full p-8 pt-24 pb-24 text-center">
                                {pageTexts[i + 1] ? (
                                  <p className="text-3xl leading-[2.8] quran-text text-slate-900 text-justify" dir="rtl">
@@ -2898,7 +2927,7 @@ export default function App() {
               {/* Plots Container */}
               <div className="flex-1 grid grid-cols-2 gap-4 p-4 content-center">
                 {farmZones.map((zone) => {
-                  const zoneTrees = trees.filter(t => t.zoneId === zone.id && (t as any).farmId === viewingFarmIndex);
+                  const zoneTrees = groupedTrees[zone.id] || [];
                   return (
                     <div 
                       key={zone.id}
@@ -2906,15 +2935,11 @@ export default function App() {
                     >
                       <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(139,69,19,0.4)_0%,transparent_70%)] z-0" />
                       {zoneTrees.map((tree) => (
-                        <span 
+                        <MemoizedTree 
                           key={tree.id} 
-                          className="tree-item z-10 animate-[pop_0.3s_ease] -m-[2px]"
-                          style={{ 
-                            fontSize: zoneTrees.length > 60 ? '0.6rem' : zoneTrees.length > 25 ? '1rem' : '1.5rem'
-                          }}
-                        >
-                          {tree.emoji}
-                        </span>
+                          emoji={tree.emoji} 
+                          fontSize={zoneTrees.length > 60 ? '0.6rem' : zoneTrees.length > 25 ? '1rem' : '1.5rem'} 
+                        />
                       ))}
                       <div className="absolute bottom-1 bg-black/50 text-white text-[0.7rem] px-2 py-0.5 rounded-xl z-20">
                         {zone.name} ({zoneTrees.length}/100)

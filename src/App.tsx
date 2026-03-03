@@ -5,7 +5,6 @@ import { Virtual } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
 import 'swiper/css/virtual';
-import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { 
   Home, 
   Sprout,
@@ -57,7 +56,7 @@ import {
 } from 'lucide-react';
 
 // --- Types ---
-type Section = 'home' | 'farm' | 'knowledge' | 'quran-reader' | 'settings' | 'misbaha' | 'adhkar' | 'ahl-allah' | 'ai-assistant' | 'names-of-allah' | 'analytics' | 'daily-missions';
+type Section = 'home' | 'farm' | 'knowledge' | 'quran-reader' | 'settings' | 'misbaha' | 'adhkar' | 'ahl-allah' | 'names-of-allah' | 'analytics' | 'daily-missions';
 type QuranMode = 'read' | 'listen' | 'tafsir' | 'map' | 'audio-library';
 
 interface Mission {
@@ -866,8 +865,6 @@ export default function App() {
   const [activeAyahAudio, setActiveAyahAudio] = useState<number | null>(null);
   
   // --- New Features State ---
-  const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
-  const [isAiLoading, setIsAiLoading] = useState(false);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [userStats, setUserStats] = useState<UserStats>({
     totalDhikr: 0,
@@ -903,34 +900,6 @@ export default function App() {
     { name: "الجبار", transliteration: "Al-Jabbar", meaning: "The Compeller", description: "الذي يجبر الكسير، وينفذ أمره في خلقه.", verse: "الْعَزِيزُ الْجَبَّارُ الْمُتَكَبِّرُ" },
     { name: "المتكبر", transliteration: "Al-Mutakabbir", meaning: "The Supreme", description: "الذي له الكبرياء والعظمة، المنزه عن صفات الخلق.", verse: "الْعَزِيزُ الْجَبَّارُ الْمُتَكَبِّرُ" },
   ];
-
-  const askAi = async (prompt: string) => {
-    if (!prompt.trim()) return;
-    
-    const newUserMessage = { role: 'user' as const, text: prompt };
-    setAiMessages(prev => [...prev, newUserMessage]);
-    setIsAiLoading(true);
-    
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const response = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
-        contents: prompt,
-        config: {
-          systemInstruction: "أنت مساعد إسلامي ذكي وفائق السرعة في تطبيق 'حسنات'. هدفك هو الإجابة على أسئلة المستخدمين حول الدين الإسلامي، القرآن، السيرة، والفقه بأسلوب لطيف، دقيق، ومبسط جداً. استخدم اللغة العربية الفصحى الجميلة. كن موجزاً وواضحاً لتسريع الاستجابة. إذا سألك المستخدم عن شيء خارج الدين، حاول ربطه بالقيم الأخلاقية الإسلامية بلطف.",
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
-        },
-      });
-      
-      const aiResponse = response.text || "عذراً، لم أستطع معالجة طلبك الآن.";
-      setAiMessages(prev => [...prev, { role: 'model' as const, text: aiResponse }]);
-    } catch (error) {
-      console.error("AI Error:", error);
-      setAiMessages(prev => [...prev, { role: 'model' as const, text: "حدث خطأ أثناء الاتصال بالمساعد الذكي. يرجى المحاولة لاحقاً." }]);
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
 
   useEffect(() => {
     // Initialize Daily Missions
@@ -1667,13 +1636,6 @@ export default function App() {
               {/* Quick Access Bar */}
               <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                 <button 
-                  onClick={() => setActiveSection('ai-assistant')}
-                  className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl shadow-lg hover:scale-105 transition-transform"
-                >
-                  <Sparkles size={18} />
-                  <span className="text-xs font-bold">المساعد الذكي</span>
-                </button>
-                <button 
                   onClick={() => setActiveSection('daily-missions')}
                   className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-2xl shadow-lg hover:scale-105 transition-transform"
                 >
@@ -1755,100 +1717,6 @@ export default function App() {
                   <Star className="text-islamic-green dark:text-emerald-500" size={32} />
                   <span className="font-bold text-xl text-slate-800 dark:text-white">الأذكار النبوية</span>
                 </button>
-              </div>
-            </motion.div>
-          )}
-
-          {activeSection === 'ai-assistant' && (
-            <motion.div
-              key="ai-assistant"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="flex flex-col h-[calc(100vh-180px)] bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-black/5 dark:border-white/5 overflow-hidden"
-            >
-              <div className="p-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                    <Sparkles size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold">مساعد حسنات الذكي</h3>
-                    <p className="text-[10px] opacity-70">مدعوم بذكاء Gemini</p>
-                  </div>
-                </div>
-                <button onClick={() => setActiveSection('home')} className="p-2 hover:bg-white/10 rounded-full">
-                  <ChevronLeft className="rotate-180" size={20} />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
-                {aiMessages.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-50">
-                    <MessageSquare size={48} className="text-purple-500" />
-                    <p className="text-sm font-medium">أهلاً بك! أنا مساعدك الذكي. يمكنك سؤالي عن أي شيء يخص الدين أو العلم الشرعي.</p>
-                    <div className="flex flex-wrap justify-center gap-2">
-                      {['ما فضل صلاة الفجر؟', 'كيف أخشع في صلاتي؟', 'معنى سورة الإخلاص'].map((q, i) => (
-                        <button 
-                          key={i}
-                          onClick={() => askAi(q)}
-                          className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] hover:bg-purple-500 hover:text-white transition-colors"
-                        >
-                          {q}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {aiMessages.map((msg, i) => (
-                  <motion.div 
-                    key={i}
-                    initial={{ opacity: 0, x: msg.role === 'user' ? -20 : 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className={`flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}
-                  >
-                    <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none shadow-lg shadow-purple-500/20'}`}>
-                      {msg.text}
-                    </div>
-                  </motion.div>
-                ))}
-                {isAiLoading && (
-                  <div className="flex justify-end">
-                    <div className="bg-purple-600/10 p-4 rounded-2xl rounded-tr-none">
-                      <div className="flex gap-1">
-                        <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 bg-purple-500 rounded-full" />
-                        <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-2 h-2 bg-purple-500 rounded-full" />
-                        <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-2 h-2 bg-purple-500 rounded-full" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-black/5 dark:border-white/5">
-                <form 
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const input = (e.target as any).elements.prompt;
-                    askAi(input.value);
-                    input.value = '';
-                  }}
-                  className="flex gap-2"
-                >
-                  <input 
-                    name="prompt"
-                    type="text" 
-                    placeholder="اسألني أي شيء..."
-                    className="flex-1 bg-white dark:bg-slate-900 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:text-white"
-                  />
-                  <button 
-                    type="submit"
-                    disabled={isAiLoading}
-                    className="p-3 bg-purple-600 text-white rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-                  >
-                    <Sparkles size={20} />
-                  </button>
-                </form>
               </div>
             </motion.div>
           )}
@@ -2021,16 +1889,6 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="p-8 bg-gradient-to-br from-slate-900 to-slate-800 rounded-[50px] text-white overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 blur-3xl rounded-full" />
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Sparkles className="text-emerald-400" size={20} />
-                  نصيحة المساعد الذكي
-                </h3>
-                <p className="text-sm text-slate-300 leading-relaxed italic">
-                  "ما شاء الله! نلاحظ التزامك الكبير بالأذكار اليوم. حاول اليوم قراءة صفحة واحدة من سورة البقرة لتعزيز بركة يومك."
-                </p>
-              </div>
             </motion.div>
           )}
 

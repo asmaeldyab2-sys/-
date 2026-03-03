@@ -39,7 +39,8 @@ import {
   Trophy,
   Users,
   Trash2,
-  Maximize
+  Maximize,
+  X
 } from 'lucide-react';
 
 // --- Types ---
@@ -1472,7 +1473,7 @@ export default function App() {
         trees.filter(t => t.zoneId === z.id && (t as any).farmId === currentFarmIndex).length >= 100
       );
 
-      if (allZonesFull) {
+          if (allZonesFull) {
         if (currentFarmIndex < 9) {
           const nextFarm = currentFarmIndex + 1;
           setCurrentFarmIndex(nextFarm);
@@ -1480,13 +1481,13 @@ export default function App() {
           try {
             localStorage.setItem('hasanat_current_farm_index', nextFarm.toString());
           } catch (e) { console.warn('localStorage error', e); }
-          setToast({ message: `مبروك! انتقلت إلى المزرعة رقم ${nextFarm + 1}`, type: 'success' });
+          showToast(`مبروك! انتقلت إلى المزرعة رقم ${nextFarm + 1}`, 'success');
         } else {
-          setToast({ message: 'لقد ملأت جميع المزارع العشرة! ماشاء الله', type: 'info' });
+          showToast('لقد ملأت جميع المزارع العشرة! ماشاء الله', 'info');
         }
         return;
       } else {
-        setToast({ message: 'هذا الحقل ممتلئ، ازرع في حقل آخر', type: 'info' });
+        showToast('هذا الحقل ممتلئ، ازرع في حقل آخر', 'info');
         return;
       }
     }
@@ -2439,7 +2440,7 @@ export default function App() {
               </div>
 
               {/* Controls Panel */}
-              <div className="bg-black/40 backdrop-blur-2xl p-6 rounded-t-[40px] grid grid-cols-3 gap-3 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] border-t border-white/10">
+              <div className="bg-black/40 backdrop-blur-2xl p-6 rounded-t-[40px] grid grid-cols-3 gap-3 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] border-t border-white/10 max-h-[40vh] overflow-y-auto no-scrollbar">
                 {farmZones.map((zone) => (
                   <button
                     key={zone.id}
@@ -2994,6 +2995,12 @@ export default function App() {
           >
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-sm font-bold">{toast.message}</span>
+            <button 
+              onClick={() => setToast(null)}
+              className="p-1 hover:bg-white/10 rounded-full transition-colors"
+            >
+              <X size={14} />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

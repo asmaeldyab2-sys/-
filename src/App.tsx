@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
+import { GoogleGenAI, Type } from "@google/genai";
 import { 
   Home, 
   Sprout,
@@ -40,11 +41,50 @@ import {
   Users,
   Trash2,
   Maximize,
-  X
+  X,
+  MessageSquare,
+  Sparkles,
+  Zap,
+  BarChart3,
+  Heart,
+  Music,
+  Map as MapIcon,
+  Flag,
+  Lock as LockIcon,
+  SkipForward
 } from 'lucide-react';
 
 // --- Types ---
-type Section = 'home' | 'farm' | 'knowledge' | 'quran-reader' | 'settings' | 'misbaha' | 'adhkar' | 'ahl-allah';
+type Section = 'home' | 'farm' | 'knowledge' | 'quran-reader' | 'settings' | 'misbaha' | 'adhkar' | 'ahl-allah' | 'ai-assistant' | 'names-of-allah' | 'analytics' | 'daily-missions';
+type QuranMode = 'read' | 'listen' | 'tafsir' | 'map' | 'audio-library';
+
+interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  reward: string;
+  completed: boolean;
+  type: 'dhikr' | 'quran' | 'knowledge' | 'exam';
+}
+
+interface AllahName {
+  name: string;
+  transliteration: string;
+  meaning: string;
+  description: string;
+  verse: string;
+}
+
+interface UserStats {
+  totalDhikr: number;
+  quranProgress: number;
+  correctAnswers: number;
+  missionsCompleted: number;
+  lastActive: string;
+  streak: number;
+}
 
 interface Surah {
   number: number;
@@ -811,7 +851,26 @@ export default function App() {
   const [selectedAyahForTafsir, setSelectedAyahForTafsir] = useState<Ayah | null>(null);
   const [tafsirContent, setTafsirContent] = useState<string | null>(null);
   const [activeAyahAudio, setActiveAyahAudio] = useState<number | null>(null);
-  const [quranMode, setQuranMode] = useState<'read' | 'listen' | 'tafsir'>('read');
+  
+  // --- New Features State ---
+  const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([]);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [userStats, setUserStats] = useState<UserStats>({
+    totalDhikr: 0,
+    quranProgress: 0,
+    correctAnswers: 0,
+    missionsCompleted: 0,
+    lastActive: new Date().toISOString(),
+    streak: 1
+  });
+  const [viewingAllahName, setViewingAllahName] = useState<AllahName | null>(null);
+  const [quranMapProgress, setQuranMapProgress] = useState<Record<number, boolean>>({});
+  const [audioLibrary, setAudioLibrary] = useState<{ title: string; artist: string; url: string; category: string }[]>([]);
+  const [activeAudioTrack, setActiveAudioTrack] = useState<any>(null);
+  const [isMiniPlayerVisible, setIsMiniPlayerVisible] = useState(false);
+  const [quranMode, setQuranMode] = useState<QuranMode>('read');
+  const [jumpPage, setJumpPage] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(() => {
     try {
       const saved = localStorage.getItem('hasanat_last_quran_page');
@@ -819,7 +878,72 @@ export default function App() {
       return isNaN(parsed) ? 1 : parsed;
     } catch { return 1; }
   });
-  const [jumpPage, setJumpPage] = useState<string>('');
+  const ALLAH_NAMES: AllahName[] = [
+    { name: "الرحمن", transliteration: "Ar-Rahman", meaning: "The Most Merciful", description: "الذي وسعت رحمته كل شيء، وهو المنعم بجلائل النعم.", verse: "الرَّحْمَنُ عَلَى الْعَرْشِ اسْتَوَى" },
+    { name: "الرحيم", transliteration: "Ar-Rahim", meaning: "The Bestower of Mercy", description: "المنعم بدقائق النعم، والرحيم بالمؤمنين خصوصاً.", verse: "وَكَانَ بِالْمُؤْمِنِينَ رَحِيمًا" },
+    { name: "الملك", transliteration: "Al-Malik", meaning: "The King", description: "المتصرف في ملكه كما يشاء، الغني بذاته عن كل شيء.", verse: "فَتَعَالَى اللَّهُ الْمَلِكُ الْحَقُّ" },
+    { name: "القدوس", transliteration: "Al-Quddus", meaning: "The Most Holy", description: "المنزه عن كل نقص، والمقدس عن كل ما لا يليق بجلاله.", verse: "الْمَلِكُ الْقُدُّوسُ السَّلَامُ" },
+    { name: "السلام", transliteration: "As-Salam", meaning: "The Source of Peace", description: "الذي سلمت ذاته من النقص، وسلم خلقه من ظلمه.", verse: "السَّلَامُ الْمُؤْمِنُ الْمُهَيْمِنُ" },
+    { name: "المؤمن", transliteration: "Al-Mu'min", meaning: "The Giver of Faith", description: "الذي يصدق عباده وعوده، ويؤمنهم من عذابه.", verse: "الْمُؤْمِنُ الْمُهَيْمِنُ الْعَزِيزُ" },
+    { name: "المهيمن", transliteration: "Al-Muhaymin", meaning: "The Guardian", description: "الرقيب الحافظ لكل شيء، القائم على خلقه بأعمالهم.", verse: "الْمُؤْمِنُ الْمُهَيْمِنُ الْعَزِيزُ" },
+    { name: "العزيز", transliteration: "Al-Aziz", meaning: "The Almighty", description: "الغالب الذي لا يغلب، والقوي الذي لا يرام.", verse: "الْعَزِيزُ الْجَبَّارُ الْمُتَكَبِّرُ" },
+    { name: "الجبار", transliteration: "Al-Jabbar", meaning: "The Compeller", description: "الذي يجبر الكسير، وينفذ أمره في خلقه.", verse: "الْعَزِيزُ الْجَبَّارُ الْمُتَكَبِّرُ" },
+    { name: "المتكبر", transliteration: "Al-Mutakabbir", meaning: "The Supreme", description: "الذي له الكبرياء والعظمة، المنزه عن صفات الخلق.", verse: "الْعَزِيزُ الْجَبَّارُ الْمُتَكَبِّرُ" },
+  ];
+
+  const askAi = async (prompt: string) => {
+    if (!prompt.trim()) return;
+    
+    const newUserMessage = { role: 'user' as const, text: prompt };
+    setAiMessages(prev => [...prev, newUserMessage]);
+    setIsAiLoading(true);
+    
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
+          systemInstruction: "أنت مساعد إسلامي ذكي في تطبيق 'حسنات'. هدفك هو الإجابة على أسئلة المستخدمين حول الدين الإسلامي، القرآن، السيرة، والفقه بأسلوب لطيف، دقيق، ومبسط. استخدم اللغة العربية الفصحى الجميلة. إذا سألك المستخدم عن شيء خارج الدين، حاول ربطه بالقيم الأخلاقية الإسلامية بلطف.",
+        },
+      });
+      
+      const aiResponse = response.text || "عذراً، لم أستطع معالجة طلبك الآن.";
+      setAiMessages(prev => [...prev, { role: 'model' as const, text: aiResponse }]);
+    } catch (error) {
+      console.error("AI Error:", error);
+      setAiMessages(prev => [...prev, { role: 'model' as const, text: "حدث خطأ أثناء الاتصال بالمساعد الذكي. يرجى المحاولة لاحقاً." }]);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initialize Daily Missions
+    const dailyMissions: Mission[] = [
+      { id: '1', title: 'ورد الأذكار', description: 'قم بإنهاء 100 تسبيحة في المسبحة', target: 100, current: dhikrCount, reward: 'شجرة نادرة', completed: dhikrCount >= 100, type: 'dhikr' },
+      { id: '2', title: 'ورد القرآن', description: 'اقرأ 5 صفحات من القرآن الكريم اليوم', target: 5, current: Object.keys(pageTexts).length, reward: 'وسام القارئ', completed: Object.keys(pageTexts).length >= 5, type: 'quran' },
+      { id: '3', title: 'طالب العلم', description: 'أجب على 5 أسئلة صحيحة في الاختبارات', target: 5, current: userStats.correctAnswers, reward: 'نقطة علم', completed: userStats.correctAnswers >= 5, type: 'exam' },
+    ];
+    setMissions(dailyMissions);
+  }, [dhikrCount, pageTexts, userStats.correctAnswers]);
+
+  useEffect(() => {
+    // Load Stats
+    try {
+      const savedStats = localStorage.getItem('hasanat_user_stats');
+      if (savedStats) setUserStats(JSON.parse(savedStats));
+    } catch (e) { console.warn('Stats load error', e); }
+  }, []);
+
+  useEffect(() => {
+    // Save Stats
+    try {
+      localStorage.setItem('hasanat_user_stats', JSON.stringify(userStats));
+    } catch (e) { console.warn('Stats save error', e); }
+  }, [userStats]);
+  
+  // --- New Features State ---
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [flipDirection, setFlipDirection] = useState<'next' | 'prev'>('next');
   const [showAboutModal, setShowAboutModal] = useState(false);
@@ -1513,6 +1637,38 @@ export default function App() {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-6"
             >
+              {/* Quick Access Bar */}
+              <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                <button 
+                  onClick={() => setActiveSection('ai-assistant')}
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl shadow-lg hover:scale-105 transition-transform"
+                >
+                  <Sparkles size={18} />
+                  <span className="text-xs font-bold">المساعد الذكي</span>
+                </button>
+                <button 
+                  onClick={() => setActiveSection('daily-missions')}
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-2xl shadow-lg hover:scale-105 transition-transform"
+                >
+                  <Zap size={18} />
+                  <span className="text-xs font-bold">تحديات اليوم</span>
+                </button>
+                <button 
+                  onClick={() => setActiveSection('names-of-allah')}
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl shadow-lg hover:scale-105 transition-transform"
+                >
+                  <Heart size={18} />
+                  <span className="text-xs font-bold">أسماء الله</span>
+                </button>
+                <button 
+                  onClick={() => setActiveSection('analytics')}
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-2xl shadow-lg hover:scale-105 transition-transform"
+                >
+                  <BarChart3 size={18} />
+                  <span className="text-xs font-bold">إحصائياتي</span>
+                </button>
+              </div>
+
               {/* Daily Progress Bar */}
               <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-black/5 dark:border-white/5">
                 <div className="flex justify-between items-center mb-3">
@@ -1572,6 +1728,281 @@ export default function App() {
                   <Star className="text-islamic-green dark:text-emerald-500" size={32} />
                   <span className="font-bold text-xl text-slate-800 dark:text-white">الأذكار النبوية</span>
                 </button>
+              </div>
+            </motion.div>
+          )}
+
+          {activeSection === 'ai-assistant' && (
+            <motion.div
+              key="ai-assistant"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="flex flex-col h-[calc(100vh-180px)] bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-black/5 dark:border-white/5 overflow-hidden"
+            >
+              <div className="p-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold">مساعد حسنات الذكي</h3>
+                    <p className="text-[10px] opacity-70">مدعوم بذكاء Gemini</p>
+                  </div>
+                </div>
+                <button onClick={() => setActiveSection('home')} className="p-2 hover:bg-white/10 rounded-full">
+                  <ChevronLeft className="rotate-180" size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
+                {aiMessages.length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-50">
+                    <MessageSquare size={48} className="text-purple-500" />
+                    <p className="text-sm font-medium">أهلاً بك! أنا مساعدك الذكي. يمكنك سؤالي عن أي شيء يخص الدين أو العلم الشرعي.</p>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {['ما فضل صلاة الفجر؟', 'كيف أخشع في صلاتي؟', 'معنى سورة الإخلاص'].map((q, i) => (
+                        <button 
+                          key={i}
+                          onClick={() => askAi(q)}
+                          className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-full text-[10px] hover:bg-purple-500 hover:text-white transition-colors"
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {aiMessages.map((msg, i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ opacity: 0, x: msg.role === 'user' ? -20 : 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={`flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}
+                  >
+                    <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none shadow-lg shadow-purple-500/20'}`}>
+                      {msg.text}
+                    </div>
+                  </motion.div>
+                ))}
+                {isAiLoading && (
+                  <div className="flex justify-end">
+                    <div className="bg-purple-600/10 p-4 rounded-2xl rounded-tr-none">
+                      <div className="flex gap-1">
+                        <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1 }} className="w-2 h-2 bg-purple-500 rounded-full" />
+                        <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-2 h-2 bg-purple-500 rounded-full" />
+                        <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-2 h-2 bg-purple-500 rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-black/5 dark:border-white/5">
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const input = (e.target as any).elements.prompt;
+                    askAi(input.value);
+                    input.value = '';
+                  }}
+                  className="flex gap-2"
+                >
+                  <input 
+                    name="prompt"
+                    type="text" 
+                    placeholder="اسألني أي شيء..."
+                    className="flex-1 bg-white dark:bg-slate-900 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:text-white"
+                  />
+                  <button 
+                    type="submit"
+                    disabled={isAiLoading}
+                    className="p-3 bg-purple-600 text-white rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    <Sparkles size={20} />
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          )}
+
+          {activeSection === 'names-of-allah' && (
+            <motion.div
+              key="names-of-allah"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={() => setActiveSection('home')} className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-400">
+                  <ChevronLeft className="rotate-180" />
+                </button>
+                <h2 className="text-xl font-bold text-emerald-500">أسماء الله الحسنى</h2>
+                <div className="w-10" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {ALLAH_NAMES.map((name, i) => (
+                  <motion.button
+                    key={i}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setViewingAllahName(name)}
+                    className="aspect-square bg-white dark:bg-slate-800 rounded-[40px] shadow-sm border border-black/5 dark:border-white/5 flex flex-col items-center justify-center p-6 group relative overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-4xl font-black text-emerald-600 dark:text-emerald-400 mb-2 quran-text">{name.name}</span>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-widest">{name.transliteration}</span>
+                  </motion.button>
+                ))}
+              </div>
+
+              {viewingAllahName && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
+                  <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[50px] p-8 shadow-2xl relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-emerald-500/20 to-transparent" />
+                    <button 
+                      onClick={() => setViewingAllahName(null)}
+                      className="absolute top-6 right-6 p-2 bg-black/5 dark:bg-white/5 rounded-full text-slate-400 hover:text-slate-600"
+                    >
+                      <X size={20} />
+                    </button>
+                    
+                    <div className="relative text-center space-y-6 pt-8">
+                      <h3 className="text-6xl font-black text-emerald-600 dark:text-emerald-400 quran-text">{viewingAllahName.name}</h3>
+                      <div className="space-y-1">
+                        <p className="text-xl font-bold text-slate-800 dark:text-white">{viewingAllahName.meaning}</p>
+                        <p className="text-xs text-slate-400 uppercase tracking-widest">{viewingAllahName.transliteration}</p>
+                      </div>
+                      <div className="h-px bg-black/5 dark:bg-white/5 w-1/2 mx-auto" />
+                      <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{viewingAllahName.description}</p>
+                      <div className="p-4 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-3xl border border-emerald-500/10">
+                        <p className="quran-text text-lg text-emerald-700 dark:text-emerald-400 italic">"{viewingAllahName.verse}"</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeSection === 'daily-missions' && (
+            <motion.div
+              key="daily-missions"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={() => setActiveSection('home')} className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-400">
+                  <ChevronLeft className="rotate-180" />
+                </button>
+                <h2 className="text-xl font-bold text-amber-500">تحديات اليوم</h2>
+                <div className="w-10" />
+              </div>
+
+              <div className="space-y-4">
+                {missions.map((mission) => (
+                  <div 
+                    key={mission.id}
+                    className={`p-6 rounded-[40px] border transition-all ${mission.completed ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-white dark:bg-slate-800 border-black/5 dark:border-white/5'}`}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${mission.completed ? 'bg-emerald-500 text-white' : 'bg-amber-500/10 text-amber-500'}`}>
+                          {mission.type === 'dhikr' && <RotateCcw size={24} />}
+                          {mission.type === 'quran' && <Book size={24} />}
+                          {mission.type === 'exam' && <Trophy size={24} />}
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-slate-800 dark:text-white">{mission.title}</h3>
+                          <p className="text-[10px] text-slate-400">{mission.description}</p>
+                        </div>
+                      </div>
+                      {mission.completed && <Check className="text-emerald-500" size={24} />}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[10px] font-bold">
+                        <span className="text-slate-400">التقدم: {mission.current}/{mission.target}</span>
+                        <span className="text-amber-500">الجائزة: {mission.reward}</span>
+                      </div>
+                      <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(100, (mission.current / mission.target) * 100)}%` }}
+                          className={`h-full ${mission.completed ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {activeSection === 'analytics' && (
+            <motion.div
+              key="analytics"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={() => setActiveSection('home')} className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-400">
+                  <ChevronLeft className="rotate-180" />
+                </button>
+                <h2 className="text-xl font-bold text-blue-500">إحصائياتي الروحية</h2>
+                <div className="w-10" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-[40px] shadow-sm border border-black/5 dark:border-white/5 text-center">
+                  <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <RotateCcw size={24} />
+                  </div>
+                  <p className="text-2xl font-black text-slate-800 dark:text-white">{userStats.totalDhikr}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider">إجمالي الأذكار</p>
+                </div>
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-[40px] shadow-sm border border-black/5 dark:border-white/5 text-center">
+                  <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <Book size={24} />
+                  </div>
+                  <p className="text-2xl font-black text-slate-800 dark:text-white">{userStats.quranProgress}%</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider">ختم القرآن</p>
+                </div>
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-[40px] shadow-sm border border-black/5 dark:border-white/5 text-center">
+                  <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <Trophy size={24} />
+                  </div>
+                  <p className="text-2xl font-black text-slate-800 dark:text-white">{userStats.correctAnswers}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider">إجابات صحيحة</p>
+                </div>
+                <div className="p-6 bg-white dark:bg-slate-800 rounded-[40px] shadow-sm border border-black/5 dark:border-white/5 text-center">
+                  <div className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <Zap size={24} />
+                  </div>
+                  <p className="text-2xl font-black text-slate-800 dark:text-white">{userStats.streak}</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider">أيام متتالية</p>
+                </div>
+              </div>
+
+              <div className="p-8 bg-gradient-to-br from-slate-900 to-slate-800 rounded-[50px] text-white overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 blur-3xl rounded-full" />
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Sparkles className="text-emerald-400" size={20} />
+                  نصيحة المساعد الذكي
+                </h3>
+                <p className="text-sm text-slate-300 leading-relaxed italic">
+                  "ما شاء الله! نلاحظ التزامك الكبير بالأذكار اليوم. حاول اليوم قراءة صفحة واحدة من سورة البقرة لتعزيز بركة يومك."
+                </p>
               </div>
             </motion.div>
           )}
@@ -1987,85 +2418,174 @@ export default function App() {
                       <ChevronLeft className="rotate-180" />
                     </button>
                     <h2 className="text-xl font-bold text-islamic-green dark:text-emerald-500">القرآن الكريم</h2>
-                    <div className="w-10" />
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => setQuranMode(quranMode === 'map' ? 'read' : 'map')}
+                        className={`p-2 rounded-full shadow-sm transition-colors ${quranMode === 'map' ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-slate-800 text-slate-400'}`}
+                      >
+                        <MapIcon size={20} />
+                      </button>
+                      <button 
+                        onClick={() => setQuranMode(quranMode === 'audio-library' ? 'read' : 'audio-library')}
+                        className={`p-2 rounded-full shadow-sm transition-colors ${quranMode === 'audio-library' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-slate-800 text-slate-400'}`}
+                      >
+                        <Music size={20} />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="relative mb-6">
-                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
-                    <input
-                      type="text"
-                      placeholder="بحث عن سورة..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-800 border border-black/5 dark:border-white/5 rounded-2xl py-3 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-islamic-green/20 dark:focus:ring-emerald-500/20 shadow-sm dark:text-slate-200"
-                    />
-                  </div>
-
-                  {lastRead && !searchQuery && (
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                      <div className="p-4 bg-islamic-gold/10 dark:bg-amber-500/10 rounded-2xl border border-islamic-gold/20 dark:border-amber-500/20 flex flex-col justify-between">
-                        <div>
-                          <p className="text-[10px] text-islamic-gold dark:text-amber-500 font-bold uppercase tracking-wider">آخر سورة</p>
-                          <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{lastRead.surah}</p>
-                        </div>
-                        <button 
-                          onClick={() => {
-                            const s = surahs.find(x => x.number === lastRead.number);
-                            if (s) handleSurahClick(s);
-                          }}
-                          className="mt-2 bg-islamic-gold dark:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold shadow-sm w-fit"
-                        >
-                          متابعة
-                        </button>
-                      </div>
-                      
-                      {bookmarks.length > 0 && (
-                        <div className="p-4 bg-islamic-green/10 dark:bg-emerald-500/10 rounded-2xl border border-islamic-green/20 dark:border-emerald-500/20 flex flex-col justify-between">
-                          <div>
-                            <p className="text-[10px] text-islamic-green dark:text-emerald-500 font-bold uppercase tracking-wider">العلامات ({bookmarks.length})</p>
-                            <div className="flex gap-1 mt-1">
-                              {bookmarks.slice(-3).map((b, i) => (
-                                <div key={i} className={`w-2 h-2 rounded-full ${getBookmarkColor(b.type)}`} />
-                              ))}
-                            </div>
+                  {quranMode === 'map' ? (
+                    <div className="space-y-6">
+                      <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-6 rounded-[40px] text-white overflow-hidden relative">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl rounded-full -mr-16 -mt-16" />
+                        <h3 className="text-xl font-bold mb-2">رحلة القرآن</h3>
+                        <p className="text-xs opacity-80">تتبع تقدمك في ختم كتاب الله من خلال هذه الخريطة التفاعلية</p>
+                        <div className="mt-4 flex items-center gap-3">
+                          <div className="flex-1 bg-white/20 h-2 rounded-full overflow-hidden">
+                            <div className="h-full bg-white w-[15%]" />
                           </div>
-                          <button 
-                            onClick={() => {
-                              const b = bookmarks[bookmarks.length - 1];
-                              const s = surahs.find(x => x.number === b.surahNumber);
-                              if (s) handleSurahClick(s);
-                            }}
-                            className="mt-2 bg-islamic-green dark:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold shadow-sm w-fit"
+                          <span className="text-xs font-bold">15%</span>
+                        </div>
+                      </div>
+
+                      <div className="relative py-10 px-4 space-y-12">
+                        {/* Map Path Line */}
+                        <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-emerald-100 dark:bg-emerald-900/30 -translate-x-1/2 z-0" />
+                        
+                        {[
+                          { id: 1, name: 'الفاتحة', status: 'completed', icon: <Check size={16} /> },
+                          { id: 2, name: 'البقرة', status: 'current', icon: <Flag size={16} /> },
+                          { id: 3, name: 'آل عمران', status: 'locked', icon: <LockIcon size={16} /> },
+                          { id: 4, name: 'النساء', status: 'locked', icon: <LockIcon size={16} /> },
+                          { id: 5, name: 'المائدة', status: 'locked', icon: <LockIcon size={16} /> },
+                        ].map((node, i) => (
+                          <motion.div 
+                            key={node.id}
+                            initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            className={`relative z-10 flex items-center gap-4 ${i % 2 === 0 ? 'flex-row' : 'flex-row-reverse text-left'}`}
                           >
-                            آخر علامة
+                            <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center shadow-lg transition-all ${node.status === 'completed' ? 'bg-emerald-500 text-white' : node.status === 'current' ? 'bg-amber-500 text-white scale-110 ring-4 ring-amber-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                              {node.icon}
+                            </div>
+                            <div className={`flex-1 p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-black/5 dark:border-white/5 ${i % 2 === 0 ? 'text-right' : 'text-left'}`}>
+                              <h4 className="font-bold text-slate-800 dark:text-white">{node.name}</h4>
+                              <p className="text-[10px] text-slate-400">{node.status === 'completed' ? 'تمت القراءة' : node.status === 'current' ? 'أنت هنا الآن' : 'لم تصل بعد'}</p>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : quranMode === 'audio-library' ? (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 gap-4">
+                        {[
+                          { title: 'مشاري العفاسي', sub: 'المصحف المرتل', duration: '24:15:00', icon: <Music size={24} /> },
+                          { title: 'عبد الباسط عبد الصمد', sub: 'المصحف المجود', duration: '30:45:00', icon: <Music size={24} /> },
+                          { title: 'ماهر المعيقلي', sub: 'حرم مكة', duration: '22:10:00', icon: <Music size={24} /> },
+                        ].map((track, i) => (
+                          <button 
+                            key={i}
+                            onClick={() => {
+                              setActiveAudioTrack(track);
+                              setIsMiniPlayerVisible(true);
+                            }}
+                            className="flex items-center justify-between p-6 bg-white dark:bg-slate-800 rounded-[32px] shadow-sm border border-black/5 dark:border-white/5 hover:border-blue-500/30 transition-all group"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                                {track.icon}
+                              </div>
+                              <div className="text-right">
+                                <h4 className="font-bold text-slate-800 dark:text-white">{track.title}</h4>
+                                <p className="text-[10px] text-slate-400">{track.sub}</p>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-400">{track.duration}</span>
                           </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative mb-6">
+                        <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
+                        <input
+                          type="text"
+                          placeholder="بحث عن سورة..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full bg-white dark:bg-slate-800 border border-black/5 dark:border-white/5 rounded-2xl py-3 pr-12 pl-4 focus:outline-none focus:ring-2 focus:ring-islamic-green/20 dark:focus:ring-emerald-500/20 shadow-sm dark:text-slate-200"
+                        />
+                      </div>
+
+                      {lastRead && !searchQuery && (
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                          <div className="p-4 bg-islamic-gold/10 dark:bg-amber-500/10 rounded-2xl border border-islamic-gold/20 dark:border-amber-500/20 flex flex-col justify-between">
+                            <div>
+                              <p className="text-[10px] text-islamic-gold dark:text-amber-500 font-bold uppercase tracking-wider">آخر سورة</p>
+                              <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{lastRead.surah}</p>
+                            </div>
+                            <button 
+                              onClick={() => {
+                                const s = surahs.find(x => x.number === lastRead.number);
+                                if (s) handleSurahClick(s);
+                              }}
+                              className="mt-2 bg-islamic-gold dark:bg-amber-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold shadow-sm w-fit"
+                            >
+                              متابعة
+                            </button>
+                          </div>
+                          
+                          {bookmarks.length > 0 && (
+                            <div className="p-4 bg-islamic-green/10 dark:bg-emerald-500/10 rounded-2xl border border-islamic-green/20 dark:border-emerald-500/20 flex flex-col justify-between">
+                              <div>
+                                <p className="text-[10px] text-islamic-green dark:text-emerald-500 font-bold uppercase tracking-wider">العلامات ({bookmarks.length})</p>
+                                <div className="flex gap-1 mt-1">
+                                  {bookmarks.slice(-3).map((b, i) => (
+                                    <div key={i} className={`w-2 h-2 rounded-full ${getBookmarkColor(b.type)}`} />
+                                  ))}
+                                </div>
+                              </div>
+                              <button 
+                                onClick={() => {
+                                  const b = bookmarks[bookmarks.length - 1];
+                                  const s = surahs.find(x => x.number === b.surahNumber);
+                                  if (s) handleSurahClick(s);
+                                }}
+                                className="mt-2 bg-islamic-green dark:bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold shadow-sm w-fit"
+                              >
+                                آخر علامة
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
-                    </div>
-                  )}
 
-                  <div className="grid grid-cols-1 gap-3">
-                    {surahs
-                      .filter(s => s.name.includes(searchQuery) || s.englishName.toLowerCase().includes(searchQuery.toLowerCase()))
-                      .map((surah) => (
-                      <button
-                        key={surah.number}
-                        onClick={() => handleSurahClick(surah)}
-                        className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-black/5 dark:border-white/5 hover:border-islamic-green/30 dark:hover:border-emerald-500/30 transition-all"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-islamic-green/10 dark:bg-emerald-500/10 rounded-full flex items-center justify-center text-islamic-green dark:text-emerald-500 font-bold text-sm">
-                            {surah.number}
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold text-slate-800 dark:text-slate-200">{surah.name}</p>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500">{surah.numberOfAyahs} آية • {surah.revelationType === 'Meccan' ? 'مكية' : 'مدنية'}</p>
-                          </div>
-                        </div>
-                        <ChevronLeft size={18} className="text-slate-300 dark:text-slate-600" />
-                      </button>
-                    ))}
-                  </div>
+                      <div className="grid grid-cols-1 gap-3">
+                        {surahs
+                          .filter(s => s.name.includes(searchQuery) || s.englishName.toLowerCase().includes(searchQuery.toLowerCase()))
+                          .map((surah) => (
+                          <button
+                            key={surah.number}
+                            onClick={() => handleSurahClick(surah)}
+                            className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-black/5 dark:border-white/5 hover:border-islamic-green/30 dark:hover:border-emerald-500/30 transition-all"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 bg-islamic-green/10 dark:bg-emerald-500/10 rounded-full flex items-center justify-center text-islamic-green dark:text-emerald-500 font-bold text-sm">
+                                {surah.number}
+                              </div>
+                              <div className="text-right">
+                                <p className="font-bold text-slate-800 dark:text-slate-200">{surah.name}</p>
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500">{surah.numberOfAyahs} آية • {surah.revelationType === 'Meccan' ? 'مكية' : 'مدنية'}</p>
+                              </div>
+                            </div>
+                            <ChevronLeft size={18} className="text-slate-300 dark:text-slate-600" />
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </>
               ) : (
                 <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm min-h-[60vh]">
@@ -2926,6 +3446,41 @@ export default function App() {
         </button>
       </nav>
       )}
+
+      <AnimatePresence>
+        {isMiniPlayerVisible && activeAudioTrack && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-28 left-6 right-6 bg-white dark:bg-slate-900 rounded-[32px] p-4 shadow-2xl z-[60] border border-black/5 dark:border-white/5 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center text-white">
+                <Music size={24} />
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-slate-800 dark:text-white text-sm">{activeAudioTrack.title}</p>
+                <p className="text-[10px] text-slate-400">{activeAudioTrack.sub}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="p-2 text-slate-400 hover:text-blue-500">
+                <SkipForward size={20} />
+              </button>
+              <button className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <Play size={20} fill="currentColor" />
+              </button>
+              <button 
+                onClick={() => setIsMiniPlayerVisible(false)}
+                className="p-2 text-slate-300 hover:text-red-500"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {notificationDhikr && (

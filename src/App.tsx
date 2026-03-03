@@ -706,8 +706,6 @@ function SplashScreen({ onComplete }: { onComplete: () => void }) {
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [permissionsGranted, setPermissionsGranted] = useState({
-    location: false,
-    microphone: false,
     notifications: false
   });
   const [currentFarmIndex, setCurrentFarmIndex] = useState<number>(() => {
@@ -729,19 +727,6 @@ export default function App() {
   const [loadingPage, setLoadingPage] = useState<number | null>(null);
 
   const requestAllPermissions = async () => {
-    // Location
-    try {
-      if (typeof navigator !== 'undefined' && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          () => setPermissionsGranted(prev => ({ ...prev, location: true })),
-          (err) => console.warn('Location permission denied', err),
-          { timeout: 10000 }
-        );
-      }
-    } catch (e) {
-      console.warn('Geolocation access failed', e);
-    }
-
     // Notifications
     try {
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
@@ -978,29 +963,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Fetch Prayer Times with Geolocation
+    // Fetch Prayer Times (Default to Mecca)
     const fetchPrayerTimes = async () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=4`);
-            const data = await res.json();
-            if (data.data) {
-              setPrayerTimes(data.data.timings);
-              setLocation('موقعك الحالي');
-            }
-          } catch (e) {
-            console.error("Error fetching prayer times with geo", e);
-            fetchMeccaTimes();
-          }
-        }, (error) => {
-          console.warn("Geolocation denied", error);
-          fetchMeccaTimes();
-        });
-      } else {
-        fetchMeccaTimes();
-      }
+      fetchMeccaTimes();
     };
 
     const fetchMeccaTimes = async () => {

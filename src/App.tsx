@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Virtual } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
 import 'swiper/css/virtual';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, Stars, Float, PerspectiveCamera, Environment, ContactShadows, Text, PresentationControls } from '@react-three/drei';
+import * as THREE from 'three';
 import { 
   Home, 
   Sprout,
@@ -52,11 +55,12 @@ import {
   Map as MapIcon,
   Flag,
   Lock as LockIcon,
-  SkipForward
+  SkipForward,
+  Trees
 } from 'lucide-react';
 
 // --- Types ---
-type Section = 'home' | 'farm' | 'knowledge' | 'quran-reader' | 'settings' | 'misbaha' | 'adhkar' | 'ahl-allah' | 'names-of-allah' | 'analytics' | 'daily-missions';
+type Section = 'home' | 'farm' | 'knowledge' | 'quran-reader' | 'settings' | 'misbaha' | 'adhkar' | 'ahl-allah' | 'names-of-allah' | 'analytics' | 'daily-missions' | 'badges' | 'audio-reminders';
 type QuranMode = 'read' | 'listen' | 'tafsir' | 'map' | 'audio-library';
 
 interface Mission {
@@ -85,6 +89,7 @@ interface UserStats {
   missionsCompleted: number;
   lastActive: string;
   streak: number;
+  unlockedBadges: string[];
 }
 
 interface Surah {
@@ -755,6 +760,106 @@ function SplashScreen({ onComplete }: { onComplete: () => void }) {
 }
 
 // --- Main App Component ---
+// --- 3D Components ---
+const Tree3D = ({ position, color = "#2ecc71", scale = 1, delay = 0 }) => {
+  const meshRef = useRef<THREE.Group>(null);
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      const t = state.clock.getElapsedTime() + delay;
+      meshRef.current.rotation.y = Math.sin(t * 0.5) * 0.1;
+      meshRef.current.position.y = Math.sin(t * 2) * 0.05;
+    }
+  });
+
+  return (
+    <group ref={meshRef} position={position} scale={scale}>
+      {/* Trunk */}
+      <mesh position={[0, 0.5, 0]} castShadow>
+        <cylinderGeometry args={[0.08, 0.12, 1, 8]} />
+        <meshStandardMaterial color="#5d4037" roughness={0.8} />
+      </mesh>
+      {/* Leaves - Low Poly Style */}
+      <mesh position={[0, 1.2, 0]} castShadow>
+        <coneGeometry args={[0.5, 0.8, 6]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 1.6, 0]} castShadow>
+        <coneGeometry args={[0.35, 0.6, 6]} />
+        <meshStandardMaterial color={color} roughness={0.6} />
+      </mesh>
+      {/* Glow effect */}
+      <pointLight position={[0, 1.5, 0]} intensity={0.2} color={color} distance={2} />
+    </group>
+  );
+};
+
+const MagicalForest = ({ trees }: { trees: any[] }) => {
+  const treePositions = useMemo(() => {
+    return trees.map((_, i) => {
+      const angle = (i / Math.max(1, trees.length)) * Math.PI * 2 * 5; 
+      const radius = 1.5 + (i / Math.max(1, trees.length)) * 7;
+      return [
+        Math.cos(angle) * radius + (Math.random() - 0.5) * 0.5,
+        0,
+        Math.sin(angle) * radius + (Math.random() - 0.5) * 0.5
+      ] as [number, number, number];
+    });
+  }, [trees.length]);
+
+  return (
+    <>
+      <ambientLight intensity={0.8} />
+      <directionalLight 
+        position={[10, 20, 10]} 
+        intensity={1.5} 
+        castShadow 
+        shadow-mapSize={[1024, 1024]}
+      />
+      <pointLight position={[-10, 5, -10]} intensity={0.5} color="#ffffff" />
+      
+      <PresentationControls
+        global
+        rotation={[0.2, 0, 0]}
+        polar={[-Math.PI / 4, Math.PI / 4]}
+        azimuth={[-Math.PI / 4, Math.PI / 4]}
+      >
+        <group position={[0, -1.5, 0]}>
+          {/* Ground */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+            <circleGeometry args={[15, 64]} />
+            <meshStandardMaterial color="#27ae60" roughness={0.8} />
+          </mesh>
+          
+          {/* Trees */}
+          {treePositions.map((pos, i) => (
+            <Tree3D 
+              key={i} 
+              position={pos} 
+              scale={0.6 + Math.random() * 0.4} 
+              color={i % 2 === 0 ? "#2ecc71" : "#27ae60"} 
+              delay={Math.random() * 10}
+            />
+          ))}
+
+          {/* Floating Particles - Dust in sun */}
+          {Array.from({ length: 30 }).map((_, i) => (
+            <Float key={i} speed={1} rotationIntensity={1} floatIntensity={1}>
+              <mesh position={[(Math.random() - 0.5) * 20, Math.random() * 5, (Math.random() - 0.5) * 20]}>
+                <sphereGeometry args={[0.015, 8, 8]} />
+                <meshBasicMaterial color="#ffffff" transparent opacity={0.3} />
+              </mesh>
+            </Float>
+          ))}
+        </group>
+      </PresentationControls>
+
+      <ContactShadows position={[0, -1.5, 0]} opacity={0.3} scale={30} blur={2.5} far={5} />
+      <Environment preset="city" />
+    </>
+  );
+};
+
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [permissionsGranted, setPermissionsGranted] = useState({
@@ -872,8 +977,10 @@ export default function App() {
     correctAnswers: 0,
     missionsCompleted: 0,
     lastActive: new Date().toISOString(),
-    streak: 1
+    streak: 1,
+    unlockedBadges: []
   });
+  const [hijriDate, setHijriDate] = useState<string>('');
   const [viewingAllahName, setViewingAllahName] = useState<AllahName | null>(null);
   const [quranMapProgress, setQuranMapProgress] = useState<Record<number, boolean>>({});
   const [audioLibrary, setAudioLibrary] = useState<{ title: string; artist: string; url: string; category: string }[]>([]);
@@ -900,6 +1007,48 @@ export default function App() {
     { name: "الجبار", transliteration: "Al-Jabbar", meaning: "The Compeller", description: "الذي يجبر الكسير، وينفذ أمره في خلقه.", verse: "الْعَزِيزُ الْجَبَّارُ الْمُتَكَبِّرُ" },
     { name: "المتكبر", transliteration: "Al-Mutakabbir", meaning: "The Supreme", description: "الذي له الكبرياء والعظمة، المنزه عن صفات الخلق.", verse: "الْعَزِيزُ الْجَبَّارُ الْمُتَكَبِّرُ" },
   ];
+
+  const BADGES = [
+    { id: 'streak_7', title: 'المثابر', description: 'التزام لمدة 7 أيام متتالية', icon: '🔥', requirement: (stats: UserStats) => stats.streak >= 7 },
+    { id: 'dhikr_1000', title: 'الذاكر', description: 'إكمال 1000 تسبيحة', icon: '📿', requirement: (stats: UserStats) => stats.totalDhikr >= 1000 },
+    { id: 'quran_finish', title: 'القارئ', description: 'ختم القرآن الكريم', icon: '📖', requirement: (stats: UserStats) => stats.quranProgress >= 100 },
+    { id: 'exam_master', title: 'العالم', description: 'الإجابة على 50 سؤالاً صحيحاً', icon: '🎓', requirement: (stats: UserStats) => stats.correctAnswers >= 50 },
+    { id: 'mission_hero', title: 'البطل', description: 'إكمال 20 مهمة يومية', icon: '🏆', requirement: (stats: UserStats) => stats.missionsCompleted >= 20 },
+  ];
+
+  const AUDIO_REMINDERS = [
+    { id: 1, title: 'فضل الصلاة على النبي', artist: 'الشيخ صالح الفوزان', url: 'https://server12.mp3quran.net/maher/001.mp3', duration: '1:20' },
+    { id: 2, title: 'أهمية الصبر', artist: 'الشيخ ابن عثيمين', url: 'https://server12.mp3quran.net/maher/002.mp3', duration: '2:15' },
+    { id: 3, title: 'بر الوالدين', artist: 'الشيخ عبد الرزاق البدر', url: 'https://server12.mp3quran.net/maher/003.mp3', duration: '1:45' },
+    { id: 4, title: 'فضل الاستغفار', artist: 'الشيخ محمد بن هادي', url: 'https://server12.mp3quran.net/maher/004.mp3', duration: '3:00' },
+  ];
+
+  useEffect(() => {
+    // Fetch Hijri Date
+    const fetchHijri = async () => {
+      try {
+        const res = await fetch('https://api.aladhan.com/v1/gToH?date=' + new Date().toLocaleDateString('en-GB').replace(/\//g, '-'));
+        const data = await res.json();
+        if (data.data && data.data.hijri) {
+          const h = data.data.hijri;
+          setHijriDate(`${h.day} ${h.month.ar} ${h.year} هـ`);
+        }
+      } catch (e) { console.warn('Hijri fetch error', e); }
+    };
+    fetchHijri();
+  }, []);
+
+  useEffect(() => {
+    // Check for new badges
+    const newBadges = BADGES.filter(b => b.requirement(userStats) && !userStats.unlockedBadges.includes(b.id));
+    if (newBadges.length > 0) {
+      setUserStats(prev => ({
+        ...prev,
+        unlockedBadges: [...prev.unlockedBadges, ...newBadges.map(b => b.id)]
+      }));
+      newBadges.forEach(b => showToast(`مبروك! حصلت على وسام: ${b.title}`, 'success'));
+    }
+  }, [userStats]);
 
   useEffect(() => {
     // Initialize Daily Missions
@@ -1606,7 +1755,10 @@ export default function App() {
             >
               <Settings size={20} />
             </button>
-            <h1 className="text-3xl font-bold text-emerald-500">حسنات</h1>
+            <div className="flex flex-col items-center">
+              <h1 className="text-3xl font-bold text-emerald-500">حسنات</h1>
+              {hijriDate && <span className="text-[10px] text-slate-400 font-bold">{hijriDate}</span>}
+            </div>
             <div className="flex items-center gap-2">
               {deferredPrompt && (
                 <button 
@@ -1655,6 +1807,20 @@ export default function App() {
                 >
                   <BarChart3 size={18} />
                   <span className="text-xs font-bold">إحصائياتي</span>
+                </button>
+                <button 
+                  onClick={() => setActiveSection('badges')}
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-2xl shadow-lg hover:scale-105 transition-transform"
+                >
+                  <Trophy size={18} />
+                  <span className="text-xs font-bold">الأوسمة</span>
+                </button>
+                <button 
+                  onClick={() => setActiveSection('audio-reminders')}
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-rose-500 to-orange-600 text-white rounded-2xl shadow-lg hover:scale-105 transition-transform"
+                >
+                  <Volume2 size={18} />
+                  <span className="text-xs font-bold">مواعظ قصيرة</span>
                 </button>
               </div>
 
@@ -1889,6 +2055,89 @@ export default function App() {
                 </div>
               </div>
 
+            </motion.div>
+          )}
+
+          {activeSection === 'badges' && (
+            <motion.div
+              key="badges"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={() => setActiveSection('home')} className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-400">
+                  <ChevronLeft className="rotate-180" />
+                </button>
+                <h2 className="text-xl font-bold text-purple-500">الأوسمة والإنجازات</h2>
+                <div className="w-10" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {BADGES.map((badge) => {
+                  const isUnlocked = userStats.unlockedBadges.includes(badge.id);
+                  return (
+                    <div 
+                      key={badge.id}
+                      className={`p-6 rounded-[40px] border transition-all text-center relative overflow-hidden ${isUnlocked ? 'bg-white dark:bg-slate-800 border-purple-500/20 shadow-lg shadow-purple-500/5' : 'bg-slate-50 dark:bg-slate-900 border-black/5 dark:border-white/5 opacity-50 grayscale'}`}
+                    >
+                      <div className="text-4xl mb-3">{badge.icon}</div>
+                      <h3 className="font-bold text-slate-800 dark:text-white text-sm mb-1">{badge.title}</h3>
+                      <p className="text-[10px] text-slate-400 leading-tight">{badge.description}</p>
+                      {!isUnlocked && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/5 backdrop-blur-[1px]">
+                          <LockIcon size={20} className="text-slate-400" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {activeSection === 'audio-reminders' && (
+            <motion.div
+              key="audio-reminders"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <button onClick={() => setActiveSection('home')} className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-400">
+                  <ChevronLeft className="rotate-180" />
+                </button>
+                <h2 className="text-xl font-bold text-rose-500">مواعظ وقصص قصيرة</h2>
+                <div className="w-10" />
+              </div>
+
+              <div className="space-y-4">
+                {AUDIO_REMINDERS.map((audio) => (
+                  <button
+                    key={audio.id}
+                    onClick={() => {
+                      setActiveAudioTrack(audio);
+                      setIsMiniPlayerVisible(true);
+                      setAudioUrl(audio.url);
+                      setIsAudioPlaying(true);
+                    }}
+                    className="w-full p-6 bg-white dark:bg-slate-800 rounded-[32px] shadow-sm border border-black/5 dark:border-white/5 flex items-center justify-between hover:border-rose-500/30 transition-all group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${activeAudioTrack?.id === audio.id ? 'bg-rose-500 text-white' : 'bg-rose-50 dark:bg-rose-500/10 text-rose-500 group-hover:bg-rose-500 group-hover:text-white'}`}>
+                        {activeAudioTrack?.id === audio.id && isAudioPlaying ? <Pause size={24} /> : <Play size={24} />}
+                      </div>
+                      <div className="text-right">
+                        <h3 className="font-bold text-slate-800 dark:text-white text-sm">{audio.title}</h3>
+                        <p className="text-[10px] text-slate-400">{audio.artist}</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-300">{audio.duration}</span>
+                  </button>
+                ))}
+              </div>
             </motion.div>
           )}
 
@@ -2731,101 +2980,77 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex flex-col bg-[#2ecc71] overflow-hidden"
+              className="fixed inset-0 z-[100] flex flex-col bg-[#87ceeb] overflow-hidden"
             >
-              {/* Natural Background Image */}
+              {/* 3D Forest View */}
               <div className="absolute inset-0 z-0">
-                <img 
-                  src="https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=1920&q=80" 
-                  alt="Nature Background" 
-                  className="w-full h-full object-cover opacity-60"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
+                <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 5, 15], fov: 45 }}>
+                  <MagicalForest trees={trees.filter(t => ((t as any).farmId || 0) === viewingFarmIndex)} />
+                </Canvas>
               </div>
 
               {/* Stats Header */}
-              <div className="h-24 bg-black/20 backdrop-blur-xl flex items-center justify-between px-6 text-white font-bold z-20 border-b border-white/10">
+              <div className="h-20 bg-white/20 backdrop-blur-md flex items-center justify-between px-6 text-slate-800 font-bold z-20 border-b border-white/30">
                 <button 
                   onClick={() => setActiveSection('home')}
-                  className="p-3 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-colors shadow-lg"
+                  className="p-2 bg-white/40 border border-white/50 rounded-full hover:bg-white/60 transition-colors shadow-sm"
                 >
                   <ChevronLeft className="rotate-180" size={20} />
                 </button>
                 
                 <div className="flex flex-col items-center">
-                  <div className="text-xs opacity-70">المزرعة {viewingFarmIndex + 1}</div>
+                  <div className="text-[10px] opacity-70 uppercase tracking-wider">غابتك الإيمانية</div>
                   <div className="text-sm">
-                    غابتك: <span className="text-emerald-400">{trees.filter(t => (t as any).farmId === viewingFarmIndex).length}</span> شجرة
+                    المزرعة {viewingFarmIndex + 1} • <span className="text-emerald-600">{trees.filter(t => ((t as any).farmId || 0) === viewingFarmIndex).length} شجرة</span>
                   </div>
                 </div>
 
                 <div className="flex gap-2">
                   <button 
-                    onClick={() => {
-                      const prev = Math.max(0, viewingFarmIndex - 1);
-                      setViewingFarmIndex(prev);
-                    }}
-                    className={`p-2 rounded-full transition-colors ${viewingFarmIndex > 0 ? 'bg-white/20' : 'bg-white/5 opacity-50'}`}
+                    onClick={() => setViewingFarmIndex(Math.max(0, viewingFarmIndex - 1))}
+                    className={`p-2 rounded-full transition-colors ${viewingFarmIndex > 0 ? 'bg-white/40' : 'bg-white/10 opacity-50'}`}
                   >
                     <ChevronLeft className="rotate-180" size={14} />
                   </button>
                   <button 
-                    onClick={() => {
-                      const next = Math.min(currentFarmIndex, viewingFarmIndex + 1);
-                      setViewingFarmIndex(next);
-                    }}
-                    className={`p-2 rounded-full transition-colors ${viewingFarmIndex < currentFarmIndex ? 'bg-white/20' : 'bg-white/5 opacity-50'}`}
+                    onClick={() => setViewingFarmIndex(Math.min(currentFarmIndex, viewingFarmIndex + 1))}
+                    className={`p-2 rounded-full transition-colors ${viewingFarmIndex < currentFarmIndex ? 'bg-white/40' : 'bg-white/10 opacity-50'}`}
                   >
                     <ChevronLeft size={14} />
                   </button>
                 </div>
               </div>
 
-              {/* Plots Container */}
-              <div className="flex-1 grid grid-cols-2 gap-4 p-4 content-center">
-                {farmZones.map((zone) => {
-                  const zoneTrees = groupedTrees[zone.id] || [];
-                  return (
-                    <div 
-                      key={zone.id}
-                      className="relative bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-[40px] h-40 flex flex-wrap justify-center content-center shadow-2xl overflow-hidden transition-all hover:scale-[1.02]"
-                    >
-                      <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(139,69,19,0.4)_0%,transparent_70%)] z-0" />
-                      {zoneTrees.map((tree) => (
-                        <MemoizedTree 
-                          key={tree.id} 
-                          emoji={tree.emoji} 
-                          fontSize={zoneTrees.length > 60 ? '0.6rem' : zoneTrees.length > 25 ? '1rem' : '1.5rem'} 
-                        />
-                      ))}
-                      <div className="absolute bottom-1 bg-black/50 text-white text-[0.7rem] px-2 py-0.5 rounded-xl z-20">
-                        {zone.name} ({zoneTrees.length}/100)
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {/* Overlay Content */}
+              <div className="flex-1 pointer-events-none" />
 
               {/* Controls Panel */}
-              <div className="bg-black/40 backdrop-blur-2xl p-6 rounded-t-[40px] grid grid-cols-3 gap-3 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] border-t border-white/10 max-h-[40vh] overflow-y-auto no-scrollbar">
-                {farmZones.map((zone) => (
-                  <button
-                    key={zone.id}
-                    onClick={() => plantTree(zone.id, zone.emoji)}
-                    className="bg-white/5 backdrop-blur-sm border border-white/10 text-white rounded-[20px] py-4 px-2 flex flex-col items-center cursor-pointer active:scale-95 transition-all hover:bg-emerald-500/30 hover:border-emerald-500/50 group"
-                  >
-                    <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">{zone.emoji}</span>
-                    <span className="text-[0.7rem] font-bold whitespace-nowrap opacity-80 group-hover:opacity-100">{zone.name}</span>
-                  </button>
-                ))}
+              <div className="bg-white/80 backdrop-blur-xl p-6 pb-10 rounded-t-[40px] z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] border-t border-white/50">
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h3 className="text-slate-800 font-bold flex items-center gap-2 text-sm">
+                    <Sparkles className="text-amber-500" size={16} />
+                    اغرس في جنتك
+                  </h3>
+                  <span className="text-[10px] text-slate-400">اضغط للغرس</span>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-3">
+                  {farmZones.map((zone) => (
+                    <button
+                      key={zone.id}
+                      onClick={() => plantTree(zone.id, zone.emoji)}
+                      className="pointer-events-auto bg-slate-50 border border-slate-200 text-slate-800 rounded-3xl py-4 px-1 flex flex-col items-center cursor-pointer active:scale-90 transition-all hover:bg-emerald-50 hover:border-emerald-200 group"
+                    >
+                      <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">{zone.emoji}</span>
+                      <span className="text-[9px] font-bold whitespace-nowrap opacity-70">{zone.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <style>{`
-                @keyframes pop {
-                  from { transform: scale(0); }
-                  to { transform: scale(1); }
-                }
+                .no-scrollbar::-webkit-scrollbar { display: none; }
+                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
               `}</style>
             </motion.div>
           )}
